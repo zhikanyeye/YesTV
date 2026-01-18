@@ -55,6 +55,13 @@ export function SourceSelector({
         return current ? [current, ...sortedOthers] : sortedOthers;
     }, [sources, latencies, currentSource]);
 
+    // Calculate rank for non-current sources (1-based ranking)
+    const calculateSourceRank = useCallback((sourceId: string, index: number): number => {
+        if (sourceId === currentSource) return -1; // Current source has no rank
+        // If current source is at position 0, actual rank = index, otherwise index + 1
+        return sortedSources[0]?.source === currentSource ? index : index + 1;
+    }, [currentSource, sortedSources]);
+
     // Refresh latency for all sources
     const refreshLatencies = useCallback(async () => {
         setIsLoading(true);
@@ -106,12 +113,10 @@ export function SourceSelector({
 
     // Auto-scroll to current source when it changes
     useEffect(() => {
-        if (currentSource && buttonRefs.current[currentSource]) {
-            buttonRefs.current[currentSource]?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest'
-            });
-        }
+        buttonRefs.current[currentSource]?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
     }, [currentSource]);
 
     if (sources.length <= 1) {
@@ -141,9 +146,7 @@ export function SourceSelector({
                 {sortedSources.map((source, index) => {
                     const isCurrent = source.source === currentSource;
                     const latency = latencies[source.source] ?? source.latency;
-                    
-                    // Calculate rank for non-current sources (skip index 0 if current is at top)
-                    const rank = isCurrent ? -1 : (sortedSources[0].source === currentSource ? index : index + 1);
+                    const rank = calculateSourceRank(source.source, index);
 
                     return (
                         <button
