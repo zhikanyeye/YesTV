@@ -5,7 +5,7 @@
  * Following Liquid Glass design system
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -36,15 +36,31 @@ export function SourceSelector({
 }: SourceSelectorProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [latencies, setLatencies] = useState<Record<string, number>>({});
+    const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
-    // Sort sources by latency
+    // Sort sources by latency - keep current source at top
     const sortedSources = useMemo(() => {
-        return [...sources].sort((a, b) => {
+        // Separate current source and other sources
+        const current = sources.find(s => s.source === currentSource);
+        const others = sources.filter(s => s.source !== currentSource);
+        
+        // Sort other sources by latency
+        const sortedOthers = others.sort((a, b) => {
             const latA = latencies[a.source] ?? a.latency ?? Infinity;
             const latB = latencies[b.source] ?? b.latency ?? Infinity;
             return latA - latB;
         });
-    }, [sources, latencies]);
+        
+        // Current source at top
+        return current ? [current, ...sortedOthers] : sortedOthers;
+    }, [sources, latencies, currentSource]);
+
+    // Calculate rank for non-current sources (1-based ranking)
+    const calculateSourceRank = useCallback((sourceId: string, index: number): number => {
+        if (sourceId === currentSource) return -1; // Current source has no rank
+        // If current source is at position 0, actual rank = index, otherwise index + 1
+        return sortedSources[0]?.source === currentSource ? index : index + 1;
+    }, [currentSource, sortedSources]);
 
     // Refresh latency for all sources
     const refreshLatencies = useCallback(async () => {
@@ -95,6 +111,14 @@ export function SourceSelector({
         setLatencies(initial);
     }, [sources]);
 
+    // Auto-scroll to current source when it changes
+    useEffect(() => {
+        buttonRefs.current[currentSource]?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+    }, [currentSource]);
+
     if (sources.length <= 1) {
         return null;
     }
@@ -122,10 +146,12 @@ export function SourceSelector({
                 {sortedSources.map((source, index) => {
                     const isCurrent = source.source === currentSource;
                     const latency = latencies[source.source] ?? source.latency;
+                    const rank = calculateSourceRank(source.source, index);
 
                     return (
                         <button
                             key={`${source.source}-${index}`}
+                            ref={(el) => { buttonRefs.current[source.source] = el; }}
                             onClick={() => !isCurrent && onSourceChange(source)}
                             className={`
                 w-full p-3 rounded-[var(--radius-2xl)] text-left transition-all duration-200
@@ -172,16 +198,16 @@ export function SourceSelector({
                                 <Icons.Play size={16} className="flex-shrink-0" />
                             )}
 
-                            {/* Rank badge for top 3 */}
-                            {!isCurrent && index < 3 && (
+                            {/* Rank badge for top 3 (excluding current source) */}
+                            {!isCurrent && rank > 0 && rank <= 3 && (
                                 <Badge
                                     variant="secondary"
-                                    className={`flex-shrink-0 ${index === 0 ? 'bg-yellow-500/20 text-yellow-600 border-yellow-500' :
-                                        index === 1 ? 'bg-gray-400/20 text-gray-600 border-gray-400' :
+                                    className={`flex-shrink-0 ${rank === 1 ? 'bg-yellow-500/20 text-yellow-600 border-yellow-500' :
+                                        rank === 2 ? 'bg-gray-400/20 text-gray-600 border-gray-400' :
                                             'bg-orange-400/20 text-orange-600 border-orange-400'
                                         }`}
                                 >
-                                    #{index + 1}
+                                    #{rank}
                                 </Badge>
                             )}
                         </button>
