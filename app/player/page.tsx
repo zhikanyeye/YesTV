@@ -214,8 +214,8 @@ function PlayerContent() {
                       params.set('title', title || '');
                       
                       // Preserve current episode
-                      if (episodeParam) {
-                        params.set('episode', episodeParam);
+                      if (currentEpisode !== undefined && currentEpisode !== null) {
+                        params.set('episode', currentEpisode.toString());
                       }
                       
                       // Preserve grouped sources for switching
