@@ -209,16 +209,30 @@ function PlayerContent() {
                     onSourceChange={(newSource) => {
                       // Navigate to same video with different source
                       const params = new URLSearchParams();
-                      params.set('id', String(newSource.id));
+                      params.set('id', videoId || '');
                       params.set('source', newSource.source);
                       params.set('title', title || '');
+                      
+                      // Preserve current episode
+                      if (episodeParam) {
+                        params.set('episode', episodeParam);
+                      }
+                      
+                      // Preserve grouped sources for switching
                       if (groupedSourcesParam) {
                         params.set('groupedSources', groupedSourcesParam);
                       }
+                      
+                      // Preserve premium mode
+                      if (isPremium) {
+                        params.set('premium', '1');
+                      }
+                      
+                      // Update current source ID
                       setCurrentSourceId(newSource.source);
-                      router.replace(`/player?${params.toString()}`, { scroll: false });
-                      // Trigger refetch
-                      window.location.reload();
+                      
+                      // Use router.push instead of reload to let React handle updates
+                      router.push(`/player?${params.toString()}`);
                     }}
                   />
                 )}
