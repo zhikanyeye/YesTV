@@ -14,6 +14,7 @@ interface DesktopVideoPlayerProps {
   poster?: string;
   onError?: (error: string) => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
+  onResolutionChange?: (resolution: { width: number; height: number } | null) => void;
   initialTime?: number;
   shouldAutoPlay?: boolean;
   // Episode navigation props for auto-skip/auto-next
@@ -28,6 +29,7 @@ export function DesktopVideoPlayer({
   poster,
   onError,
   onTimeUpdate,
+  onResolutionChange,
   initialTime = 0,
   shouldAutoPlay = false,
   totalEpisodes = 1,
@@ -66,6 +68,13 @@ export function DesktopVideoPlayer({
   React.useEffect(() => {
     setIsLoading(true);
   }, [src, setIsLoading]);
+
+  // Notify parent component of resolution changes
+  React.useEffect(() => {
+    if (onResolutionChange) {
+      onResolutionChange(data.videoResolution);
+    }
+  }, [data.videoResolution, onResolutionChange]);
 
   const logic = useDesktopPlayerLogic({
     src,

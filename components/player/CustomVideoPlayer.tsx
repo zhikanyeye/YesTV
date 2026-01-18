@@ -8,6 +8,7 @@ interface CustomVideoPlayerProps {
   poster?: string;
   onError?: (error: string) => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
+  onResolutionChange?: (resolution: { width: number; height: number } | null) => void;
   initialTime?: number;
   shouldAutoPlay?: boolean;
   // Episode navigation props for auto-skip/auto-next

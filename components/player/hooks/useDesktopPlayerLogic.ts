@@ -85,13 +85,15 @@ export function useDesktopPlayerLogic({
         setShowToast,
         setIsCastAvailable,
         setIsCasting,
-        setShowMoreMenu
+        setShowMoreMenu,
+        setVideoResolution
     } = actions;
 
     const playbackControls = usePlaybackControls({
         videoRef, isPlaying, setIsPlaying, setIsLoading,
         initialTime, shouldAutoPlay, setDuration, setCurrentTime, onTimeUpdate, onError,
-        isDraggingProgressRef, speedMenuTimeoutRef, playbackRate, setPlaybackRate, setShowSpeedMenu
+        isDraggingProgressRef, speedMenuTimeoutRef, playbackRate, setPlaybackRate, setShowSpeedMenu,
+        setVideoResolution
     });
 
     const volumeControls = useVolumeControls({
