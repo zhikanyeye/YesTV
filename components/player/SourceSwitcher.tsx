@@ -24,7 +24,6 @@ interface SourceSwitcherProps {
 
 interface SearchResult extends Video {
   sourceDisplayName?: string;
-  latency?: number;
 }
 
 export function SourceSwitcher({
@@ -217,7 +216,7 @@ export function SourceSwitcher({
 
             return (
               <button
-                key={`${video.source}-${video.vod_id}-${index}`}
+                key={`${video.source}-${video.vod_id}`}
                 onClick={() => handleSourceSwitch(video)}
                 className="
                   w-full p-3 rounded-[var(--radius-2xl)] text-left transition-all duration-200
