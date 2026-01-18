@@ -8,6 +8,7 @@ import { VideoMetadata } from '@/components/player/VideoMetadata';
 import { EpisodeList } from '@/components/player/EpisodeList';
 import { PlayerError } from '@/components/player/PlayerError';
 import { SourceSelector, SourceInfo } from '@/components/player/SourceSelector';
+import { SourceSwitcher } from '@/components/player/SourceSwitcher';
 import { useVideoPlayer } from '@/lib/hooks/useVideoPlayer';
 import { useHistory } from '@/lib/store/history-store';
 import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
@@ -222,6 +223,13 @@ function PlayerContent() {
                     }}
                   />
                 )}
+
+                {/* Source Switcher - always show for active source switching */}
+                <SourceSwitcher
+                  videoTitle={title || videoData?.vod_name || ''}
+                  currentSource={source || ''}
+                  isPremium={isPremium}
+                />
               </div>
             </div>
           </div>
