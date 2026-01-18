@@ -207,14 +207,17 @@ function PlayerContent() {
                     sources={groupedSources}
                     currentSource={currentSourceId || source || ''}
                     onSourceChange={(newSource) => {
+                      // Guard: ensure we have a valid video ID
+                      if (!videoId) return;
+                      
                       // Navigate to same video with different source
                       const params = new URLSearchParams();
-                      params.set('id', videoId || '');
+                      params.set('id', videoId);
                       params.set('source', newSource.source);
                       params.set('title', title || '');
                       
                       // Preserve current episode
-                      if (currentEpisode !== undefined && currentEpisode !== null) {
+                      if (currentEpisode != null) {
                         params.set('episode', currentEpisode.toString());
                       }
                       
