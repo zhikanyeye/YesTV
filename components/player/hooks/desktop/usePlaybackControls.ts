@@ -18,6 +18,7 @@ interface UsePlaybackControlsProps {
     playbackRate: number;
     setPlaybackRate: (rate: number) => void;
     setShowSpeedMenu: (show: boolean) => void;
+    setVideoResolution: (resolution: { width: number; height: number } | null) => void;
 }
 
 export function usePlaybackControls({
@@ -35,7 +36,8 @@ export function usePlaybackControls({
     speedMenuTimeoutRef,
     playbackRate,
     setPlaybackRate,
-    setShowSpeedMenu
+    setShowSpeedMenu,
+    setVideoResolution
 }: UsePlaybackControlsProps) {
     const togglePlay = useCallback(() => {
         if (!videoRef.current) return;
@@ -71,6 +73,14 @@ export function usePlaybackControls({
     const handleLoadedMetadata = useCallback(() => {
         if (!videoRef.current) return;
         setDuration(videoRef.current.duration);
+        
+        // Capture video resolution
+        const width = videoRef.current.videoWidth;
+        const height = videoRef.current.videoHeight;
+        if (width > 0 && height > 0) {
+            setVideoResolution({ width, height });
+        }
+        
         // Removed setIsLoading(false) because metadata loading is too early.
         // We wait for onCanPlay to set isLoading to false.
 
@@ -90,7 +100,7 @@ export function usePlaybackControls({
         videoRef.current.play().catch((err: Error) => {
             console.warn('Autoplay was prevented:', err);
         });
-    }, [videoRef, setDuration, setIsLoading, initialTime, playbackRate]);
+    }, [videoRef, setDuration, setIsLoading, initialTime, playbackRate, setVideoResolution]);
 
     // Handle late initialization of initialTime (e.g. from async storage hydration)
     useEffect(() => {
@@ -115,6 +125,25 @@ export function usePlaybackControls({
             }
         }
     }, [shouldAutoPlay, videoRef]);
+
+    // Listen for resize events to handle dynamic resolution changes
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        const handleResize = () => {
+            const width = video.videoWidth;
+            const height = video.videoHeight;
+            if (width > 0 && height > 0) {
+                setVideoResolution({ width, height });
+            }
+        };
+
+        video.addEventListener('resize', handleResize);
+        return () => {
+            video.removeEventListener('resize', handleResize);
+        };
+    }, [videoRef, setVideoResolution]);
 
     const handleVideoError = useCallback(() => {
         setIsLoading(false);

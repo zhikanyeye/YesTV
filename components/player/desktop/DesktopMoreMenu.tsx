@@ -32,12 +32,14 @@ export function DesktopMoreMenu({
         autoSkipOutro,
         skipOutroSeconds,
         showModeIndicator,
+        showResolutionIndicator,
         setAutoNextEpisode,
         setAutoSkipIntro,
         setSkipIntroSeconds,
         setAutoSkipOutro,
         setSkipOutroSeconds,
         setShowModeIndicator,
+        setShowResolutionIndicator,
     } = usePlayerSettings();
 
     const buttonRef = React.useRef<HTMLButtonElement>(null);
@@ -125,6 +127,26 @@ export function DesktopMoreMenu({
                 >
                     <span
                         className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${showModeIndicator ? 'translate-x-4' : 'translate-x-0'
+                            }`}
+                    />
+                </button>
+            </div>
+
+            {/* Show Resolution Indicator Switch */}
+            <div className="px-4 py-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-3 text-sm text-[var(--text-color)]">
+                    <Icons.Maximize size={18} />
+                    <span>显示分辨率指示器</span>
+                </div>
+                <button
+                    onClick={() => setShowResolutionIndicator(!showResolutionIndicator)}
+                    className={`relative w-10 h-6 rounded-full transition-colors cursor-pointer ${showResolutionIndicator ? 'bg-[var(--accent-color)]' : 'bg-[color-mix(in_srgb,var(--text-color)_20%,transparent)]'
+                        }`}
+                    aria-checked={showResolutionIndicator}
+                    role="switch"
+                >
+                    <span
+                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${showResolutionIndicator ? 'translate-x-4' : 'translate-x-0'
                             }`}
                     />
                 </button>

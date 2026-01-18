@@ -35,6 +35,7 @@ export interface AppSettings {
   autoSkipOutro: boolean;
   skipOutroSeconds: number;
   showModeIndicator: boolean; // Show '直连模式'/'代理模式' badge on player
+  showResolutionIndicator: boolean; // Show video resolution badge on player
   // Search & Display settings
   realtimeLatency: boolean; // Enable real-time latency ping updates
   searchDisplayMode: SearchDisplayMode; // 'normal' = individual cards, 'grouped' = group same-name videos
@@ -105,6 +106,7 @@ export const settingsStore = {
         autoSkipOutro: false,
         skipOutroSeconds: 0,
         showModeIndicator: false,
+        showResolutionIndicator: false,
         realtimeLatency: false,
         searchDisplayMode: 'normal',
         episodeReverseOrder: false,
@@ -128,6 +130,7 @@ export const settingsStore = {
         autoSkipOutro: false,
         skipOutroSeconds: 0,
         showModeIndicator: false,
+        showResolutionIndicator: false,
         realtimeLatency: false,
         searchDisplayMode: 'normal',
         episodeReverseOrder: false,
@@ -187,6 +190,7 @@ export const settingsStore = {
         autoSkipOutro: parsed.autoSkipOutro !== undefined ? parsed.autoSkipOutro : false,
         skipOutroSeconds: typeof parsed.skipOutroSeconds === 'number' ? parsed.skipOutroSeconds : 0,
         showModeIndicator: parsed.showModeIndicator !== undefined ? parsed.showModeIndicator : false,
+        showResolutionIndicator: parsed.showResolutionIndicator !== undefined ? parsed.showResolutionIndicator : false,
         realtimeLatency: parsed.realtimeLatency !== undefined ? parsed.realtimeLatency : false,
         searchDisplayMode: parsed.searchDisplayMode === 'grouped' ? 'grouped' : 'normal',
         episodeReverseOrder: parsed.episodeReverseOrder !== undefined ? parsed.episodeReverseOrder : false,
@@ -210,6 +214,7 @@ export const settingsStore = {
         autoSkipOutro: false,
         skipOutroSeconds: 0,
         showModeIndicator: false,
+        showResolutionIndicator: false,
         realtimeLatency: false,
         searchDisplayMode: 'normal',
         episodeReverseOrder: false,

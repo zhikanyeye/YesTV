@@ -43,14 +43,22 @@ export function VideoPlayer({
 
   // Get showModeIndicator setting
   const [showModeIndicator, setShowModeIndicator] = useState(false);
+  
+  // Get showResolutionIndicator setting
+  const [showResolutionIndicator, setShowResolutionIndicator] = useState(false);
+  
+  // Store video resolution
+  const [videoResolution, setVideoResolution] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
     // Initial value
     setShowModeIndicator(settingsStore.getSettings().showModeIndicator);
+    setShowResolutionIndicator(settingsStore.getSettings().showResolutionIndicator);
 
     // Subscribe to changes
     const unsubscribe = settingsStore.subscribe(() => {
       setShowModeIndicator(settingsStore.getSettings().showModeIndicator);
+      setShowResolutionIndicator(settingsStore.getSettings().showResolutionIndicator);
     });
 
     return () => unsubscribe();
@@ -174,6 +182,14 @@ export function VideoPlayer({
 
   return (
     <Card hover={false} className="p-0 overflow-hidden relative">
+      {/* Resolution Indicator Badge - controlled by settings */}
+      {showResolutionIndicator && videoResolution && videoResolution.width > 0 && videoResolution.height > 0 && (
+        <div className="absolute top-3 left-3 z-30">
+          <span className="px-2 py-1 text-xs font-medium rounded-full backdrop-blur-md transition-all duration-300 bg-cyan-500/80 text-white">
+            {videoResolution.width}×{videoResolution.height}
+          </span>
+        </div>
+      )}
       {/* Mode Indicator Badge - controlled by settings */}
       {showModeIndicator && (
         <div className="absolute top-3 right-3 z-30">
@@ -199,6 +215,7 @@ export function VideoPlayer({
           src={finalPlayUrl}
           onError={handleVideoError}
           onTimeUpdate={handleTimeUpdate}
+          onResolutionChange={setVideoResolution}
           initialTime={getSavedProgress()}
           shouldAutoPlay={shouldAutoPlay}
           totalEpisodes={totalEpisodes}
