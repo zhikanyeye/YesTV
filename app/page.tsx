@@ -15,6 +15,7 @@ function HomePage() {
     query,
     hasSearched,
     loading,
+    sourcesLoading,
     results,
     availableSources,
     completedSources,
@@ -37,6 +38,7 @@ function HomePage() {
           onSearch={handleSearch}
           onClear={handleReset}
           isLoading={loading}
+          sourcesLoading={sourcesLoading}
           initialQuery={query}
           currentSource=""
           checkedSources={completedSources}

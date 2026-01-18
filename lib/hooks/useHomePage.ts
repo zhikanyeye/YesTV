@@ -16,6 +16,8 @@ export function useHomePage() {
     const [query, setQuery] = useState('');
     const [hasSearched, setHasSearched] = useState(false);
     const [currentSortBy, setCurrentSortBy] = useState<SortOption>('default');
+    const [sourcesLoading, setSourcesLoading] = useState(true);
+    const [sourcesLoaded, setSourcesLoaded] = useState(false);
 
     const onUrlUpdate = useCallback((q: string) => {
         router.replace(`/?q=${encodeURIComponent(q)}`, { scroll: false });
@@ -64,6 +66,14 @@ export function useHomePage() {
     useEffect(() => {
         const updateSettings = () => {
             const settings = settingsStore.getSettings();
+            const enabledSources = settings.sources.filter(s => s.enabled);
+            const hasSources = enabledSources.length > 0;
+
+            // Update loading status
+            if (hasSources && sourcesLoading) {
+                setSourcesLoading(false);
+                setSourcesLoaded(true);
+            }
 
             // Update sort preference
             if (settings.sortBy !== currentSortBy) {
@@ -73,12 +83,10 @@ export function useHomePage() {
             // Check if we need to re-trigger search due to new sources being loaded
             // This fixes the issue where initial visit has 0 sources, then sources are loaded async
             // but the search (or lack thereof) is already stuck with empty sources.
-            const enabledSources = settings.sources.filter(s => s.enabled);
-            const hasSources = enabledSources.length > 0;
-
             // If we have a query, and we haven't searched with sources yet,
             // and we suddenly have sources, trigger the search.
             if (query && hasSources && !hasSearchedWithSourcesRef.current && !loading) {
+                console.log('[Auto-retry] Sources loaded, executing search:', query);
                 if (executeSearch(query)) {
                     setHasSearched(true);
                 }
@@ -91,7 +99,7 @@ export function useHomePage() {
         // Subscribe to changes
         const unsubscribe = settingsStore.subscribe(updateSettings);
         return () => unsubscribe();
-    }, [query, loading, executeSearch, currentSortBy]);
+    }, [query, loading, executeSearch, currentSortBy, sourcesLoading]);
 
     const handleSearch = useCallback((searchQuery: string) => {
         if (!searchQuery.trim()) return;
@@ -134,6 +142,8 @@ export function useHomePage() {
         query,
         hasSearched,
         loading,
+        sourcesLoading,
+        sourcesLoaded,
         results,
         availableSources,
         completedSources,

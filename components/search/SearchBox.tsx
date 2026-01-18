@@ -11,9 +11,10 @@ interface SearchBoxProps {
     onClear?: () => void;
     initialQuery?: string;
     placeholder?: string;
+    disabled?: boolean;
 }
 
-export function SearchBox({ onSearch, onClear, initialQuery = '', placeholder = '搜索电影、电视剧、综艺...' }: SearchBoxProps) {
+export function SearchBox({ onSearch, onClear, initialQuery = '', placeholder = '搜索电影、电视剧、综艺...', disabled = false }: SearchBoxProps) {
     const [query, setQuery] = useState(initialQuery);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -76,6 +77,7 @@ export function SearchBox({ onSearch, onClear, initialQuery = '', placeholder = 
                 onBlur={handleInputBlur}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
+                disabled={disabled}
                 className="text-base sm:text-lg pr-28 sm:pr-36 md:pr-44 truncate"
                 aria-label="搜索视频内容"
                 aria-expanded={isDropdownOpen}
@@ -88,6 +90,7 @@ export function SearchBox({ onSearch, onClear, initialQuery = '', placeholder = 
                     <button
                         type="button"
                         onClick={handleClear}
+                        disabled={disabled}
                         className="p-2 text-[var(--text-color)] opacity-70 hover:opacity-100 transition-opacity touch-manipulation cursor-pointer"
                         aria-label="清除搜索"
                     >
@@ -96,7 +99,7 @@ export function SearchBox({ onSearch, onClear, initialQuery = '', placeholder = 
                 )}
                 <Button
                     type="submit"
-                    disabled={!query.trim()}
+                    disabled={!query.trim() || disabled}
                     variant="primary"
                     className="px-3 sm:px-4 md:px-6"
                 >
@@ -109,7 +112,7 @@ export function SearchBox({ onSearch, onClear, initialQuery = '', placeholder = 
 
             {/* Search History Dropdown */}
             <SearchHistoryDropdown
-                isOpen={isDropdownOpen}
+                isOpen={isDropdownOpen && !disabled}
                 searchHistory={searchHistory}
                 highlightedIndex={highlightedIndex}
                 triggerRef={inputRef}
