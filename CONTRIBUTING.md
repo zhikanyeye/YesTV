@@ -49,7 +49,7 @@
 
 如果这是你第一次为开源项目做贡献，我们推荐：
 
-1. 浏览 [GitHub Issues](https://github.com/KuekHaoYang/KVideo/issues)
+1. 浏览项目的 Issues 页面
 2. 寻找标记为 `good first issue` 的问题
 3. 在 Issue 中评论，表明你想要解决这个问题
 4. 按照本指南进行开发和提交
@@ -76,11 +76,11 @@
 
 ```bash
 # 克隆你 Fork 的仓库
-git clone https://github.com/YOUR_USERNAME/KVideo.git
-cd KVideo
+git clone https://github.com/YOUR_USERNAME/kvideo.git
+cd kvideo
 
-# 添加上游仓库
-git remote add upstream https://github.com/KuekHaoYang/KVideo.git
+# 添加上游仓库（可选）
+git remote add upstream https://github.com/UPSTREAM_OWNER/kvideo.git
 ```
 
 #### 3. 安装依赖
@@ -641,7 +641,7 @@ git push origin feat/your-feature-name
 
 - 访问你的 Fork 页面
 - 点击 "Compare & pull request"
-- 选择目标分支：`KuekHaoYang/KVideo:main`
+- 选择正确的目标分支
 
 ### PR 描述模板
 
@@ -919,7 +919,7 @@ git push origin feat/your-feature --force
 1. **查看文档**：README.md 和本指南
 2. **搜索 Issues**：可能已经有人问过相同的问题
 3. **提出问题**：在 Discussions 或 Issues 中提问
-4. **联系维护者**：[@KuekHaoYang](https://github.com/KuekHaoYang)
+4. **联系维护者**：在项目的 Issues 页面提交问题联系项目维护者
 
 ## 🎉 感谢你的贡献！
 
