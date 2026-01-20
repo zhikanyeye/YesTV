@@ -34,7 +34,7 @@ export function UnlockPremiumSources({ unlocked, onUnlock }: UnlockPremiumSource
         }
     };
 
-    const handleKeyPress = (e: React.KeyboardEvent) => {
+    const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !isVerifying) {
             handleUnlock();
         }
@@ -76,7 +76,7 @@ export function UnlockPremiumSources({ unlocked, onUnlock }: UnlockPremiumSource
                             placeholder="请输入解锁秘钥"
                             value={key}
                             onChange={(e) => setKey(e.target.value)}
-                            onKeyPress={handleKeyPress}
+                            onKeyDown={handleKeyDown}
                             disabled={isVerifying}
                             className="flex-1 px-4 py-2 rounded-[var(--radius-2xl)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] placeholder-[var(--text-color-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-color)] transition-all duration-200 disabled:opacity-50"
                         />
