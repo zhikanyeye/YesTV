@@ -337,7 +337,7 @@ docker run -d -p 3000:3000 -e NEXT_PUBLIC_SUBSCRIPTION_SOURCES='[{"name":"MySour
 
 ```bash
 # 克隆项目
-git clone <你的仓库地址>
+git clone https://github.com/YOUR_USERNAME/kvideo.git
 cd kvideo
 # 构建镜像
 docker build -t kvideo .
@@ -357,7 +357,7 @@ docker-compose up -d
 
 ```bash
 # 1. 克隆仓库
-git clone <你的仓库地址>
+git clone https://github.com/YOUR_USERNAME/kvideo.git
 cd kvideo
 
 # 2. 安装依赖

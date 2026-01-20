@@ -79,8 +79,8 @@
 git clone https://github.com/YOUR_USERNAME/kvideo.git
 cd kvideo
 
-# 添加上游仓库（如果需要）
-git remote add upstream <原始仓库地址>
+# 添加上游仓库（可选）
+git remote add upstream https://github.com/UPSTREAM_OWNER/kvideo.git
 ```
 
 #### 3. 安装依赖
@@ -919,7 +919,7 @@ git push origin feat/your-feature --force
 1. **查看文档**：README.md 和本指南
 2. **搜索 Issues**：可能已经有人问过相同的问题
 3. **提出问题**：在 Discussions 或 Issues 中提问
-4. **联系维护者**：通过项目 Issues 联系
+4. **联系维护者**：在项目的 Issues 页面提交问题联系项目维护者
 
 ## 🎉 感谢你的贡献！
 
