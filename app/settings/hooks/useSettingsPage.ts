@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { settingsStore, getDefaultSources, type SortOption, type SearchDisplayMode } from '@/lib/store/settings-store';
+import { settingsStore, getDefaultSources, getDefaultPremiumSources, type SortOption, type SearchDisplayMode } from '@/lib/store/settings-store';
 import type { VideoSource, SourceSubscription } from '@/lib/types';
 import {
     type ImportResult,
@@ -41,10 +41,14 @@ export function useSettingsPage() {
         setSearchDisplayMode(settings.searchDisplayMode);
         setPremiumUnlocked(settings.premiumUnlocked || false);
 
-        // If premium is unlocked, merge premium sources into sources
-        if (settings.premiumUnlocked && settings.premiumSources.length > 0) {
-            const mergedSources = mergeSources(settings.sources, settings.premiumSources);
-            setSources(mergedSources);
+        // If premium is unlocked, ensure premium sources are merged with current sources
+        // Use the default premium sources list to ensure all premium sources are available
+        if (settings.premiumUnlocked) {
+            const defaultPremiumSources = getDefaultPremiumSources();
+            if (defaultPremiumSources.length > 0) {
+                const mergedSources = mergeSources(settings.sources, defaultPremiumSources);
+                setSources(mergedSources);
+            }
         }
 
         // Fetch env password status
@@ -316,8 +320,11 @@ export function useSettingsPage() {
                 // Get current settings
                 const currentSettings = settingsStore.getSettings();
                 
+                // Use default premium sources to ensure all premium sources are available
+                const defaultPremiumSources = getDefaultPremiumSources();
+                
                 // Merge premium sources into sources
-                const mergedSources = mergeSources(currentSettings.sources, currentSettings.premiumSources);
+                const mergedSources = mergeSources(currentSettings.sources, defaultPremiumSources);
                 
                 // Save unlocked state
                 settingsStore.saveSettings({
