@@ -97,6 +97,7 @@ export default function SettingsPage() {
             setIsAddModalOpen(true);
           }}
           onEditSource={handleEditSource}
+          premiumUnlocked={premiumUnlocked}
         />
 
         {/* Sort Options */}
