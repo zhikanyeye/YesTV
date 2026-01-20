@@ -11,6 +11,7 @@ import { DataSettings } from '@/components/settings/DataSettings';
 import { PasswordSettings } from '@/components/settings/PasswordSettings';
 import { DisplaySettings } from '@/components/settings/DisplaySettings';
 import { SettingsHeader } from '@/components/settings/SettingsHeader';
+import { UnlockPremiumSources } from '@/components/settings/UnlockPremiumSources';
 import { useSettingsPage } from './hooks/useSettingsPage';
 
 export default function SettingsPage() {
@@ -22,6 +23,7 @@ export default function SettingsPage() {
     envPasswordSet,
     realtimeLatency,
     searchDisplayMode,
+    premiumUnlocked,
     isAddModalOpen,
     isExportModalOpen,
     isImportModalOpen,
@@ -52,6 +54,7 @@ export default function SettingsPage() {
     setEditingSource,
     handleRealtimeLatencyChange,
     handleSearchDisplayModeChange,
+    handleUnlockPremium,
   } = useSettingsPage();
 
   return (
@@ -76,6 +79,12 @@ export default function SettingsPage() {
           searchDisplayMode={searchDisplayMode}
           onRealtimeLatencyChange={handleRealtimeLatencyChange}
           onSearchDisplayModeChange={handleSearchDisplayModeChange}
+        />
+
+        {/* Unlock Premium Sources */}
+        <UnlockPremiumSources
+          unlocked={premiumUnlocked}
+          onUnlock={handleUnlockPremium}
         />
 
         {/* Source Management */}
