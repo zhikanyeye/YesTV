@@ -9,6 +9,7 @@ interface SourceSettingsProps {
     onRestoreDefaults: () => void;
     onAddSource: () => void;
     onEditSource?: (source: VideoSource) => void;
+    premiumUnlocked?: boolean;
 }
 
 export function SourceSettings({
@@ -17,6 +18,7 @@ export function SourceSettings({
     onRestoreDefaults,
     onAddSource,
     onEditSource,
+    premiumUnlocked = false,
 }: SourceSettingsProps) {
     const [showAllSources, setShowAllSources] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -57,6 +59,9 @@ export function SourceSettings({
         onSourcesChange(updated);
     };
 
+    const premiumCount = sources.filter(s => s.group === 'premium').length;
+    const normalCount = sources.filter(s => s.group === 'normal' || !s.group).length;
+
     return (
         <div className="bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
@@ -77,7 +82,10 @@ export function SourceSettings({
                 </div>
             </div>
             <p className="text-sm text-[var(--text-color-secondary)] mb-6">
-                管理视频来源，调整优先级和启用状态
+                {premiumUnlocked && premiumCount > 0 
+                    ? `管理视频来源，调整优先级和启用状态 • 当前共 ${sources.length} 个源（${normalCount} 个默认源 + ${premiumCount} 个高级源）`
+                    : `管理视频来源，调整优先级和启用状态 • 当前共 ${sources.length} 个源`
+                }
             </p>
 
             {/* Search Bar */}

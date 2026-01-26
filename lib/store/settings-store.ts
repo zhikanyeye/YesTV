@@ -28,6 +28,7 @@ export interface AppSettings {
   watchHistory: boolean;
   passwordAccess: boolean;
   accessPasswords: string[];
+  premiumUnlocked: boolean; // Premium sources unlock status
   // Player settings
   autoNextEpisode: boolean;
   autoSkipIntro: boolean;
@@ -100,6 +101,7 @@ export const settingsStore = {
         watchHistory: true,
         passwordAccess: false,
         accessPasswords: [],
+        premiumUnlocked: false,
         autoNextEpisode: true,
         autoSkipIntro: false,
         skipIntroSeconds: 0,
@@ -124,6 +126,7 @@ export const settingsStore = {
         watchHistory: true,
         passwordAccess: false,
         accessPasswords: [],
+        premiumUnlocked: false,
         autoNextEpisode: true,
         autoSkipIntro: false,
         skipIntroSeconds: 0,
@@ -184,6 +187,7 @@ export const settingsStore = {
         watchHistory: parsed.watchHistory !== undefined ? parsed.watchHistory : true,
         passwordAccess: parsed.passwordAccess !== undefined ? parsed.passwordAccess : false,
         accessPasswords: Array.isArray(parsed.accessPasswords) ? parsed.accessPasswords : [],
+        premiumUnlocked: parsed.premiumUnlocked !== undefined ? parsed.premiumUnlocked : false,
         autoNextEpisode: parsed.autoNextEpisode !== undefined ? parsed.autoNextEpisode : true,
         autoSkipIntro: parsed.autoSkipIntro !== undefined ? parsed.autoSkipIntro : false,
         skipIntroSeconds: typeof parsed.skipIntroSeconds === 'number' ? parsed.skipIntroSeconds : 0,
@@ -208,6 +212,7 @@ export const settingsStore = {
         watchHistory: true,
         passwordAccess: false,
         accessPasswords: [],
+        premiumUnlocked: false,
         autoNextEpisode: true,
         autoSkipIntro: false,
         skipIntroSeconds: 0,

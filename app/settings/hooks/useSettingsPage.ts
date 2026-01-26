@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { settingsStore, getDefaultSources, type SortOption, type SearchDisplayMode } from '@/lib/store/settings-store';
+import { settingsStore, getDefaultSources, getDefaultPremiumSources, type SortOption, type SearchDisplayMode } from '@/lib/store/settings-store';
 import type { VideoSource, SourceSubscription } from '@/lib/types';
 import {
     type ImportResult,
@@ -27,6 +27,9 @@ export function useSettingsPage() {
     const [realtimeLatency, setRealtimeLatency] = useState(false);
     const [searchDisplayMode, setSearchDisplayMode] = useState<SearchDisplayMode>('normal');
 
+    // Premium unlock state
+    const [premiumUnlocked, setPremiumUnlocked] = useState(false);
+
     useEffect(() => {
         const settings = settingsStore.getSettings();
         setSources(settings.sources || []);
@@ -36,6 +39,17 @@ export function useSettingsPage() {
         setAccessPasswords(settings.accessPasswords);
         setRealtimeLatency(settings.realtimeLatency);
         setSearchDisplayMode(settings.searchDisplayMode);
+        setPremiumUnlocked(settings.premiumUnlocked || false);
+
+        // If premium is unlocked, ensure premium sources are merged with current sources
+        // Use the default premium sources list to ensure all premium sources are available
+        if (settings.premiumUnlocked) {
+            const defaultPremiumSources = getDefaultPremiumSources();
+            if (defaultPremiumSources.length > 0) {
+                const mergedSources = mergeSources(settings.sources, defaultPremiumSources);
+                setSources(mergedSources);
+            }
+        }
 
         // Fetch env password status
         fetch('/api/config')
@@ -291,6 +305,48 @@ export function useSettingsPage() {
         window.location.reload();
     };
 
+    const handleUnlockPremium = async (key: string): Promise<boolean> => {
+        try {
+            // Verify key with API
+            const response = await fetch('/api/unlock-sources', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key }),
+            });
+
+            const data = await response.json();
+
+            if (data.valid) {
+                // Get current settings
+                const currentSettings = settingsStore.getSettings();
+                
+                // Use default premium sources to ensure all premium sources are available
+                const defaultPremiumSources = getDefaultPremiumSources();
+                
+                // Merge premium sources into sources
+                const mergedSources = mergeSources(currentSettings.sources, defaultPremiumSources);
+                
+                // Save unlocked state
+                settingsStore.saveSettings({
+                    ...currentSettings,
+                    sources: mergedSources,
+                    premiumUnlocked: true,
+                });
+
+                // Update local state
+                setPremiumUnlocked(true);
+                setSources(mergedSources);
+
+                return true;
+            }
+
+            return false;
+        } catch (error) {
+            console.error('Unlock error:', error);
+            return false;
+        }
+    };
+
     return {
         sources,
         subscriptions,
@@ -300,6 +356,7 @@ export function useSettingsPage() {
         envPasswordSet,
         realtimeLatency,
         searchDisplayMode,
+        premiumUnlocked,
         isAddModalOpen,
         isExportModalOpen,
         isImportModalOpen,
@@ -329,5 +386,6 @@ export function useSettingsPage() {
         handleEditSource,
         handleRealtimeLatencyChange,
         handleSearchDisplayModeChange,
+        handleUnlockPremium,
     };
 }
