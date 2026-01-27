@@ -47,7 +47,7 @@ export function SourceSwitcher({
 
     // Normalize titles for comparison
     const normalizeTitle = (title: string) => 
-      title.toLowerCase().replace(/\s+/g, '').trim();
+      title.toLowerCase().replace(/\s+/g, '');
     
     const currentTitle = normalizeTitle(videoTitle);
 
