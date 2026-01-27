@@ -45,18 +45,19 @@ export function SourceSwitcher({
   const filteredResults = useMemo(() => {
     if (!searchResults.length) return [];
 
-    // Filter: match video title and exclude current source
+    // Normalize titles for comparison
+    const normalizeTitle = (title: string) => 
+      title.toLowerCase().replace(/\s+/g, '');
+    
+    const currentTitle = normalizeTitle(videoTitle);
+
+    // Strict filtering: only keep results with exact title match (excluding current source)
     const filtered = searchResults.filter(video => {
-      // Normalize titles for comparison
-      const normalizeTitle = (title: string) => 
-        title.toLowerCase().replace(/\s+/g, '').trim();
-      
-      const currentTitle = normalizeTitle(videoTitle);
       const resultTitle = normalizeTitle(video.vod_name);
       
-      // Match if titles are similar and not the current source
-      return resultTitle.includes(currentTitle) || currentTitle.includes(resultTitle);
-    }).filter(video => video.source !== currentSource);
+      // Exact match: normalized titles must be equal
+      return resultTitle === currentTitle && video.source !== currentSource;
+    });
 
     // Sort by latency (low to high)
     return filtered.sort((a, b) => {
@@ -268,8 +269,8 @@ export function SourceSwitcher({
       {hasSearched && !isSearching && filteredResults.length === 0 && !error && (
         <div className="text-center py-8 text-[var(--text-color-secondary)]">
           <Icons.Search size={48} className="mx-auto mb-3 opacity-50" />
-          <p className="text-sm">未找到其他可用视频源</p>
-          <p className="text-xs mt-1">尝试在设置中启用更多视频源</p>
+          <p className="text-sm">未找到完全匹配的视频源</p>
+          <p className="text-xs mt-1">其他视频源中没有找到与当前视频标题完全相同的资源</p>
         </div>
       )}
 
