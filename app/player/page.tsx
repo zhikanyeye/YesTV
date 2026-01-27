@@ -7,8 +7,7 @@ import { VideoPlayer } from '@/components/player/VideoPlayer';
 import { VideoMetadata } from '@/components/player/VideoMetadata';
 import { EpisodeList } from '@/components/player/EpisodeList';
 import { PlayerError } from '@/components/player/PlayerError';
-import { SourceSelector, SourceInfo } from '@/components/player/SourceSelector';
-import { SourceSwitcher } from '@/components/player/SourceSwitcher';
+import { UnifiedSourceSwitcher, SourceInfo } from '@/components/player/UnifiedSourceSwitcher';
 import { useVideoPlayer } from '@/lib/hooks/useVideoPlayer';
 import { useHistory } from '@/lib/store/history-store';
 import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
@@ -202,50 +201,43 @@ function PlayerContent() {
                   onToggleReverse={handleToggleReverse}
                 />
 
-                {/* Source Selector - only show when grouped sources available */}
-                {groupedSources.length > 1 && (
-                  <SourceSelector
-                    sources={groupedSources}
-                    currentSource={currentSourceId || source || ''}
-                    onSourceChange={(newSource) => {
-                      // Guard: ensure we have a valid video ID
-                      if (!videoId) return;
-                      
-                      // Navigate to same video with different source
-                      const params = new URLSearchParams();
-                      params.set('id', videoId);
-                      params.set('source', newSource.source);
-                      params.set('title', title || '');
-                      
-                      // Preserve current episode
-                      if (currentEpisode != null) {
-                        params.set('episode', currentEpisode.toString());
-                      }
-                      
-                      // Preserve grouped sources for switching
-                      if (groupedSourcesParam) {
-                        params.set('groupedSources', groupedSourcesParam);
-                      }
-                      
-                      // Preserve premium mode
-                      if (isPremium) {
-                        params.set('premium', '1');
-                      }
-                      
-                      // Update current source ID
-                      setCurrentSourceId(newSource.source);
-                      
-                      // Use router.push instead of reload to let React handle updates
-                      router.push(`/player?${params.toString()}`);
-                    }}
-                  />
-                )}
-
-                {/* Source Switcher - always show for active source switching */}
-                <SourceSwitcher
+                {/* Unified Source Switcher - handles both grouped and searched sources */}
+                <UnifiedSourceSwitcher
+                  groupedSources={groupedSources}
                   videoTitle={title || videoData?.vod_name || ''}
-                  currentSource={source || ''}
+                  currentSource={currentSourceId || source || ''}
                   isPremium={isPremium}
+                  onSourceChange={(newSource) => {
+                    // Guard: ensure we have a valid video ID
+                    if (!videoId) return;
+                    
+                    // Navigate to same video with different source
+                    const params = new URLSearchParams();
+                    params.set('id', videoId);
+                    params.set('source', newSource.source);
+                    params.set('title', title || '');
+                    
+                    // Preserve current episode
+                    if (currentEpisode != null) {
+                      params.set('episode', currentEpisode.toString());
+                    }
+                    
+                    // Preserve grouped sources for switching
+                    if (groupedSourcesParam) {
+                      params.set('groupedSources', groupedSourcesParam);
+                    }
+                    
+                    // Preserve premium mode
+                    if (isPremium) {
+                      params.set('premium', '1');
+                    }
+                    
+                    // Update current source ID
+                    setCurrentSourceId(newSource.source);
+                    
+                    // Use router.push instead of reload to let React handle updates
+                    router.push(`/player?${params.toString()}`);
+                  }}
                 />
               </div>
             </div>
