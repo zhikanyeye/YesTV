@@ -215,8 +215,8 @@ export function UnifiedSourceSwitcher({
                             
                             if (data.type === 'videos' && Array.isArray(data.videos)) {
                                 allVideos.push(...data.videos);
-                                // Update results in real-time
-                                setSearchResults([...allVideos]);
+                                // Update results in real-time with batching
+                                setSearchResults(prev => [...prev, ...data.videos]);
                             } else if (data.type === 'error') {
                                 console.error('Search error:', data.message);
                             }
@@ -277,9 +277,6 @@ export function UnifiedSourceSwitcher({
             });
         }
     }, [currentSource, hasGroupedSources]);
-
-    // Calculate rank for display (1-based, top 3 get badges)
-    const getRank = (index: number): number => index + 1;
 
     // Don't show if only one grouped source and no search capability
     if (hasGroupedSources && groupedSources.length <= 1) {
@@ -420,7 +417,7 @@ export function UnifiedSourceSwitcher({
                     {hasSearched && !isSearching && filteredSearchResults.length > 0 && (
                         <div className="space-y-2 max-h-[400px] overflow-y-auto">
                             {filteredSearchResults.map((video, index) => {
-                                const rank = getRank(index);
+                                const rank = index + 1; // 1-based ranking
                                 const isTopRank = rank <= 3;
 
                                 return (
