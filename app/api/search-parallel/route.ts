@@ -11,6 +11,9 @@ import { getSourceName } from '@/lib/utils/source-names';
 
 export const runtime = 'edge';
 
+// Timeout configuration
+const SEARCH_TIMEOUT_MS = 8000; // 8 second timeout for individual sources
+
 export async function POST(request: NextRequest) {
   const encoder = new TextEncoder();
 
@@ -100,8 +103,17 @@ export async function POST(request: NextRequest) {
           } catch (error) {
             const endTime = performance.now();
             const latency = Math.round(endTime - startTime);
+            
+            // Check if it's a timeout error
+            const isTimeout = error instanceof Error && error.message === 'Timeout';
+            
             // Log error but continue with other sources
-            console.error(`[Search Parallel] Source ${source.id} failed after ${latency}ms:`, error);
+            if (isTimeout) {
+              console.warn(`[Search Parallel] Source ${source.id} timed out after ${SEARCH_TIMEOUT_MS}ms`);
+            } else {
+              console.error(`[Search Parallel] Source ${source.id} failed after ${latency}ms:`, error);
+            }
+            
             completedSources++;
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({

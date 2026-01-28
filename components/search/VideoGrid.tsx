@@ -49,7 +49,23 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
     }
   }, [activeCardId]);
 
-  // Normal mode items
+  // Group videos by normalized title for source aggregation
+  const videoGroups = useMemo(() => {
+    const groups = new Map<string, Video[]>();
+
+    videos.forEach(video => {
+      // Normalize title for comparison
+      const normalizedTitle = video.vod_name.toLowerCase().trim();
+      if (!groups.has(normalizedTitle)) {
+        groups.set(normalizedTitle, []);
+      }
+      groups.get(normalizedTitle)!.push(video);
+    });
+
+    return groups;
+  }, [videos]);
+
+  // Normal mode items with grouped sources
   const videoItems = useMemo(() => {
     return videos.map((video, index) => {
       const params: Record<string, string> = {
@@ -62,13 +78,29 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
         params.premium = '1';
       }
 
+      // Get all sources for this video title (grouped sources)
+      const normalizedTitle = video.vod_name.toLowerCase().trim();
+      const groupedVideos = videoGroups.get(normalizedTitle) || [video];
+      
+      // Only add groupedSources if there are multiple sources for the same video
+      if (groupedVideos.length > 1) {
+        const groupData = groupedVideos.map(v => ({
+          id: v.vod_id,
+          source: v.source,
+          sourceName: v.sourceName,
+          latency: v.latency,
+          pic: v.vod_pic,
+        }));
+        params.groupedSources = JSON.stringify(groupData);
+      }
+
       const videoUrl = `/player?${new URLSearchParams(params).toString()}`;
 
       const cardId = `${video.vod_id}-${index}`;
 
       return { video, videoUrl, cardId };
     });
-  }, [videos, isPremium]);
+  }, [videos, videoGroups, isPremium]);
 
   const totalItems = videoItems.length;
 

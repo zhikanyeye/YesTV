@@ -57,6 +57,7 @@ export function UnifiedSourceSwitcher({
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [error, setError] = useState<string>('');
     const [hasSearched, setHasSearched] = useState(false);
+    const [usingCache, setUsingCache] = useState(false);
     const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
     // Get current episode to preserve when switching
@@ -156,7 +157,7 @@ export function UnifiedSourceSwitcher({
         setIsLoading(false);
     }, [groupedSources, hasGroupedSources]);
 
-    // Search for alternative sources
+    // Search for alternative sources with timeout protection
     const handleSearch = useCallback(async () => {
         if (!videoTitle || isSearching) return;
 
@@ -164,6 +165,11 @@ export function UnifiedSourceSwitcher({
         setError('');
         setSearchResults([]);
         setHasSearched(true);
+        setUsingCache(false);
+
+        // Create abort controller for timeout
+        const abortController = new AbortController();
+        const timeoutId = setTimeout(() => abortController.abort(), 10000); // 10 second timeout
 
         try {
             // Get enabled sources from settings
@@ -186,6 +192,7 @@ export function UnifiedSourceSwitcher({
                     sources: enabledSources,
                     page: 1,
                 }),
+                signal: abortController.signal,
             });
 
             if (!response.ok) {
@@ -232,8 +239,13 @@ export function UnifiedSourceSwitcher({
             }
         } catch (err) {
             console.error('Search failed:', err);
-            setError(err instanceof Error ? err.message : '搜索失败,请重试');
+            if (err instanceof Error && err.name === 'AbortError') {
+                setError('搜索超时，请重试');
+            } else {
+                setError(err instanceof Error ? err.message : '搜索失败,请重试');
+            }
         } finally {
+            clearTimeout(timeoutId);
             setIsSearching(false);
         }
     }, [videoTitle, isPremium, isSearching]);
@@ -266,6 +278,7 @@ export function UnifiedSourceSwitcher({
             }
         });
         setLatencies(initial);
+        setUsingCache(true); // Mark that we're using cached sources
     }, [groupedSources, hasGroupedSources]);
 
     // Auto-scroll to current source when it changes
@@ -294,6 +307,12 @@ export function UnifiedSourceSwitcher({
                     ) : filteredSearchResults.length > 0 ? (
                         <Badge variant="primary">{filteredSearchResults.length}</Badge>
                     ) : null}
+                    {usingCache && hasGroupedSources && (
+                        <Badge variant="secondary" className="text-xs">
+                            <Icons.Zap size={12} className="mr-1" />
+                            已缓存
+                        </Badge>
+                    )}
                 </h3>
                 {hasGroupedSources && (
                     <Button
