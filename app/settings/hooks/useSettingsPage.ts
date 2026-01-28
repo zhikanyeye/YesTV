@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { settingsStore, getDefaultSources, getDefaultPremiumSources, type SortOption, type SearchDisplayMode } from '@/lib/store/settings-store';
+import { settingsStore, getDefaultSources, getDefaultPremiumSources, type SortOption } from '@/lib/store/settings-store';
 import type { VideoSource, SourceSubscription } from '@/lib/types';
 import {
     type ImportResult,
@@ -25,7 +25,6 @@ export function useSettingsPage() {
 
     // Display settings
     const [realtimeLatency, setRealtimeLatency] = useState(false);
-    const [searchDisplayMode, setSearchDisplayMode] = useState<SearchDisplayMode>('normal');
 
     // Premium unlock state
     const [premiumUnlocked, setPremiumUnlocked] = useState(false);
@@ -38,7 +37,6 @@ export function useSettingsPage() {
         setPasswordAccess(settings.passwordAccess);
         setAccessPasswords(settings.accessPasswords);
         setRealtimeLatency(settings.realtimeLatency);
-        setSearchDisplayMode(settings.searchDisplayMode);
         setPremiumUnlocked(settings.premiumUnlocked || false);
 
         // If premium is unlocked, ensure premium sources are merged with current sources
@@ -284,15 +282,6 @@ export function useSettingsPage() {
         });
     };
 
-    const handleSearchDisplayModeChange = (mode: SearchDisplayMode) => {
-        setSearchDisplayMode(mode);
-        const currentSettings = settingsStore.getSettings();
-        settingsStore.saveSettings({
-            ...currentSettings,
-            searchDisplayMode: mode,
-        });
-    };
-
     const handleRestoreDefaults = () => {
         const defaults = getDefaultSources();
         handleSourcesChange(defaults);
@@ -355,7 +344,6 @@ export function useSettingsPage() {
         accessPasswords,
         envPasswordSet,
         realtimeLatency,
-        searchDisplayMode,
         premiumUnlocked,
         isAddModalOpen,
         isExportModalOpen,
@@ -385,7 +373,6 @@ export function useSettingsPage() {
         editingSource,
         handleEditSource,
         handleRealtimeLatencyChange,
-        handleSearchDisplayModeChange,
         handleUnlockPremium,
     };
 }

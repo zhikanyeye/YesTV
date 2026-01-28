@@ -22,7 +22,6 @@ export default function SettingsPage() {
     accessPasswords,
     envPasswordSet,
     realtimeLatency,
-    searchDisplayMode,
     premiumUnlocked,
     isAddModalOpen,
     isExportModalOpen,
@@ -53,7 +52,6 @@ export default function SettingsPage() {
     handleEditSource,
     setEditingSource,
     handleRealtimeLatencyChange,
-    handleSearchDisplayModeChange,
     handleUnlockPremium,
   } = useSettingsPage();
 
@@ -76,9 +74,7 @@ export default function SettingsPage() {
         {/* Display Settings */}
         <DisplaySettings
           realtimeLatency={realtimeLatency}
-          searchDisplayMode={searchDisplayMode}
           onRealtimeLatencyChange={handleRealtimeLatencyChange}
-          onSearchDisplayModeChange={handleSearchDisplayModeChange}
         />
 
         {/* Unlock Premium Sources */}
