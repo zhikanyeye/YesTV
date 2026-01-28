@@ -180,6 +180,7 @@ export function UnifiedSourceSwitcher({
             if (enabledSources.length === 0) {
                 setError('没有启用的视频源');
                 setIsSearching(false);
+                clearTimeout(timeoutId);
                 return;
             }
 
@@ -310,7 +311,7 @@ export function UnifiedSourceSwitcher({
                     {usingCache && hasGroupedSources && (
                         <Badge variant="secondary" className="text-xs">
                             <Icons.Zap size={12} className="mr-1" />
-                            已缓存
+                            预加载
                         </Badge>
                     )}
                 </h3>

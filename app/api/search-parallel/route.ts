@@ -17,6 +17,11 @@ const SEARCH_TIMEOUT_MS = 8000; // 8 second timeout for individual sources
 export async function POST(request: NextRequest) {
   const encoder = new TextEncoder();
 
+  // Helper to create a timeout promise
+  const createTimeout = (ms: number) => new Promise<never>((_, reject) => 
+    setTimeout(() => reject(new Error('Timeout')), ms)
+  );
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -64,9 +69,13 @@ export async function POST(request: NextRequest) {
           const startTime = performance.now(); // Track start time
           try {
 
-
-            // Search this source
-            const result = await searchVideos(query.trim(), [source], page);
+            // Race between the actual search and timeout
+            const searchPromise = searchVideos(query.trim(), [source], page);
+            const result = await Promise.race([
+              searchPromise,
+              createTimeout(SEARCH_TIMEOUT_MS)
+            ]);
+            
             const endTime = performance.now(); // Track end time
             const latency = Math.round(endTime - startTime); // Calculate latency in ms
             const videos = result[0]?.results || [];

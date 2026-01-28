@@ -7,15 +7,7 @@ interface SearchCache {
   timestamp: number;
 }
 
-interface SourceGroupCache {
-  [videoTitle: string]: {
-    sources: any[];
-    timestamp: number;
-  };
-}
-
 const CACHE_KEY = 'kvideo_search_cache';
-const SOURCE_GROUP_CACHE_KEY = 'kvideo_source_group_cache';
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 const MAX_CACHED_RESULTS = 300;
@@ -37,11 +29,6 @@ const stripVideoData = (results: any[]) => {
 };
 
 export function useSearchCache() {
-  /**
-   * Strip unnecessary large fields before caching to save LocalStorage space
-   */
-
-
   const saveToCache = useCallback((
     query: string,
     results: any[],
@@ -103,62 +90,8 @@ export function useSearchCache() {
     }
   }, []);
 
-  /**
-   * Save grouped sources for a specific video title
-   */
-  const saveSourceGroup = useCallback((videoTitle: string, sources: any[]) => {
-    try {
-      // Load existing cache
-      const cached = localStorage.getItem(SOURCE_GROUP_CACHE_KEY);
-      const cache: SourceGroupCache = cached ? JSON.parse(cached) : {};
-
-      // Add or update this video's sources
-      cache[videoTitle.toLowerCase().trim()] = {
-        sources,
-        timestamp: Date.now(),
-      };
-
-      localStorage.setItem(SOURCE_GROUP_CACHE_KEY, JSON.stringify(cache));
-      console.log(`[Cache] Successfully saved ${sources.length} sources for video: "${videoTitle}"`);
-    } catch (error) {
-      console.error('[Cache] Failed to save source group to LocalStorage:', error);
-    }
-  }, []);
-
-  /**
-   * Load grouped sources for a specific video title
-   */
-  const loadSourceGroup = useCallback((videoTitle: string): any[] | null => {
-    try {
-      const cached = localStorage.getItem(SOURCE_GROUP_CACHE_KEY);
-      if (!cached) return null;
-
-      const cache: SourceGroupCache = JSON.parse(cached);
-      const normalizedTitle = videoTitle.toLowerCase().trim();
-      const entry = cache[normalizedTitle];
-
-      if (!entry) return null;
-
-      // Check if cache is still valid
-      if (Date.now() - entry.timestamp > CACHE_DURATION) {
-        // Clean up expired entry
-        delete cache[normalizedTitle];
-        localStorage.setItem(SOURCE_GROUP_CACHE_KEY, JSON.stringify(cache));
-        return null;
-      }
-
-      console.log(`[Cache] Loaded ${entry.sources.length} cached sources for video: "${videoTitle}"`);
-      return entry.sources;
-    } catch (error) {
-      console.error('[Cache] Failed to load source group from LocalStorage:', error);
-      return null;
-    }
-  }, []);
-
   return {
     saveToCache,
     loadFromCache,
-    saveSourceGroup,
-    loadSourceGroup,
   };
 }
