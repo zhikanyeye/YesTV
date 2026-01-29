@@ -29,11 +29,6 @@ const stripVideoData = (results: any[]) => {
 };
 
 export function useSearchCache() {
-  /**
-   * Strip unnecessary large fields before caching to save LocalStorage space
-   */
-
-
   const saveToCache = useCallback((
     query: string,
     results: any[],

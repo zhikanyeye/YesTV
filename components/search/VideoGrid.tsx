@@ -1,9 +1,7 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo, memo, useEffect } from 'react';
+import { useState, useRef, useCallback, useMemo, memo } from 'react';
 import { VideoCard } from './VideoCard';
-import { VideoGroupCard, GroupedVideo } from './VideoGroupCard';
-import { settingsStore } from '@/lib/store/settings-store';
 import { Video } from '@/lib/types';
 
 interface VideoGridProps {
@@ -15,56 +13,12 @@ interface VideoGridProps {
 export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPremium = false }: VideoGridProps) {
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(24);
-  const [displayMode, setDisplayMode] = useState<'normal' | 'grouped'>('normal');
   const gridRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
-
-  // Load display mode from settings
-  useEffect(() => {
-    const settings = settingsStore.getSettings();
-    setDisplayMode(settings.searchDisplayMode);
-
-    const unsubscribe = settingsStore.subscribe(() => {
-      const newSettings = settingsStore.getSettings();
-      setDisplayMode(newSettings.searchDisplayMode);
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   if (videos.length === 0) {
     return null;
   }
-
-  // Group videos by name when in grouped mode
-  const groupedVideos = useMemo<GroupedVideo[]>(() => {
-    if (displayMode !== 'grouped') return [];
-
-    const groups = new Map<string, Video[]>();
-
-    videos.forEach(video => {
-      const name = video.vod_name.toLowerCase().trim();
-      if (!groups.has(name)) {
-        groups.set(name, []);
-      }
-      groups.get(name)!.push(video);
-    });
-
-    return Array.from(groups.entries()).map(([, groupVideos]) => {
-      // Sort by latency (lowest first) 
-      const sorted = [...groupVideos].sort((a, b) => {
-        if (a.latency === undefined) return 1;
-        if (b.latency === undefined) return -1;
-        return a.latency - b.latency;
-      });
-
-      return {
-        representative: sorted[0],
-        videos: sorted,
-        name: sorted[0].vod_name,
-      };
-    });
-  }, [videos, displayMode]);
 
   // Callback ref for the load more trigger
   const loadMoreRef = useCallback((node: HTMLDivElement | null) => {
@@ -95,10 +49,24 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
     }
   }, [activeCardId]);
 
-  // Normal mode items
-  const videoItems = useMemo(() => {
-    if (displayMode === 'grouped') return [];
+  // Group videos by normalized title for source aggregation
+  const videoGroups = useMemo(() => {
+    const groups = new Map<string, Video[]>();
 
+    videos.forEach(video => {
+      // Normalize title for comparison
+      const normalizedTitle = video.vod_name.toLowerCase().trim();
+      if (!groups.has(normalizedTitle)) {
+        groups.set(normalizedTitle, []);
+      }
+      groups.get(normalizedTitle)!.push(video);
+    });
+
+    return groups;
+  }, [videos]);
+
+  // Normal mode items with grouped sources
+  const videoItems = useMemo(() => {
     return videos.map((video, index) => {
       const params: Record<string, string> = {
         id: String(video.vod_id),
@@ -110,25 +78,31 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
         params.premium = '1';
       }
 
+      // Get all sources for this video title (grouped sources)
+      const normalizedTitle = video.vod_name.toLowerCase().trim();
+      const groupedVideos = videoGroups.get(normalizedTitle) || [video];
+      
+      // Only add groupedSources if there are multiple sources for the same video
+      if (groupedVideos.length > 1) {
+        const groupData = groupedVideos.map(v => ({
+          id: v.vod_id,
+          source: v.source,
+          sourceName: v.sourceName,
+          latency: v.latency,
+          pic: v.vod_pic,
+        }));
+        params.groupedSources = JSON.stringify(groupData);
+      }
+
       const videoUrl = `/player?${new URLSearchParams(params).toString()}`;
 
       const cardId = `${video.vod_id}-${index}`;
 
       return { video, videoUrl, cardId };
     });
-  }, [videos, displayMode, isPremium]);
+  }, [videos, videoGroups, isPremium]);
 
-  // Grouped mode items
-  const groupItems = useMemo(() => {
-    if (displayMode !== 'grouped') return [];
-
-    return groupedVideos.map((group, index) => ({
-      group,
-      cardId: `group-${group.representative.vod_id}-${index}`,
-    }));
-  }, [groupedVideos, displayMode]);
-
-  const totalItems = displayMode === 'grouped' ? groupItems.length : videoItems.length;
+  const totalItems = videoItems.length;
 
   return (
     <>
@@ -138,38 +112,20 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
         role="list"
         aria-label="视频搜索结果"
       >
-        {displayMode === 'grouped' ? (
-          // Grouped mode
-          groupItems.slice(0, visibleCount).map(({ group, cardId }) => {
-            const isActive = activeCardId === cardId;
-            return (
-              <VideoGroupCard
-                key={cardId}
-                group={group}
-                cardId={cardId}
-                isActive={isActive}
-                onCardClick={handleCardClick}
-                isPremium={isPremium}
-              />
-            );
-          })
-        ) : (
-          // Normal mode
-          videoItems.slice(0, visibleCount).map(({ video, videoUrl, cardId }) => {
-            const isActive = activeCardId === cardId;
-            return (
-              <VideoCard
-                key={cardId}
-                video={video}
-                videoUrl={videoUrl}
-                cardId={cardId}
-                isActive={isActive}
-                onCardClick={handleCardClick}
-                isPremium={isPremium}
-              />
-            );
-          })
-        )}
+        {videoItems.slice(0, visibleCount).map(({ video, videoUrl, cardId }) => {
+          const isActive = activeCardId === cardId;
+          return (
+            <VideoCard
+              key={cardId}
+              video={video}
+              videoUrl={videoUrl}
+              cardId={cardId}
+              isActive={isActive}
+              onCardClick={handleCardClick}
+              isPremium={isPremium}
+            />
+          );
+        })}
       </div>
 
       {/* Load more trigger */}

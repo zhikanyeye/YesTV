@@ -17,8 +17,6 @@ export type SortOption =
   | 'name-asc'
   | 'name-desc';
 
-export type SearchDisplayMode = 'normal' | 'grouped';
-
 export interface AppSettings {
   sources: VideoSource[];
   premiumSources: VideoSource[];
@@ -39,7 +37,6 @@ export interface AppSettings {
   showResolutionIndicator: boolean; // Show video resolution badge on player
   // Search & Display settings
   realtimeLatency: boolean; // Enable real-time latency ping updates
-  searchDisplayMode: SearchDisplayMode; // 'normal' = individual cards, 'grouped' = group same-name videos
   episodeReverseOrder: boolean; // Persist episode list reverse state
 }
 
@@ -135,7 +132,6 @@ export const settingsStore = {
         showModeIndicator: false,
         showResolutionIndicator: false,
         realtimeLatency: false,
-        searchDisplayMode: 'normal',
         episodeReverseOrder: false,
       };
     }
@@ -196,7 +192,6 @@ export const settingsStore = {
         showModeIndicator: parsed.showModeIndicator !== undefined ? parsed.showModeIndicator : false,
         showResolutionIndicator: parsed.showResolutionIndicator !== undefined ? parsed.showResolutionIndicator : false,
         realtimeLatency: parsed.realtimeLatency !== undefined ? parsed.realtimeLatency : false,
-        searchDisplayMode: parsed.searchDisplayMode === 'grouped' ? 'grouped' : 'normal',
         episodeReverseOrder: parsed.episodeReverseOrder !== undefined ? parsed.episodeReverseOrder : false,
       };
     } catch {
@@ -221,7 +216,6 @@ export const settingsStore = {
         showModeIndicator: false,
         showResolutionIndicator: false,
         realtimeLatency: false,
-        searchDisplayMode: 'normal',
         episodeReverseOrder: false,
       };
     }

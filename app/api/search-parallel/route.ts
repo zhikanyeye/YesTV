@@ -11,8 +11,16 @@ import { getSourceName } from '@/lib/utils/source-names';
 
 export const runtime = 'edge';
 
+// Timeout configuration
+const SEARCH_TIMEOUT_MS = 8000; // 8 second timeout for individual sources
+
 export async function POST(request: NextRequest) {
   const encoder = new TextEncoder();
+
+  // Helper to create a timeout promise
+  const createTimeout = (ms: number) => new Promise<never>((_, reject) => 
+    setTimeout(() => reject(new Error('Timeout')), ms)
+  );
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -61,9 +69,13 @@ export async function POST(request: NextRequest) {
           const startTime = performance.now(); // Track start time
           try {
 
-
-            // Search this source
-            const result = await searchVideos(query.trim(), [source], page);
+            // Race between the actual search and timeout
+            const searchPromise = searchVideos(query.trim(), [source], page);
+            const result = await Promise.race([
+              searchPromise,
+              createTimeout(SEARCH_TIMEOUT_MS)
+            ]);
+            
             const endTime = performance.now(); // Track end time
             const latency = Math.round(endTime - startTime); // Calculate latency in ms
             const videos = result[0]?.results || [];
@@ -100,8 +112,17 @@ export async function POST(request: NextRequest) {
           } catch (error) {
             const endTime = performance.now();
             const latency = Math.round(endTime - startTime);
+            
+            // Check if it's a timeout error
+            const isTimeout = error instanceof Error && error.message === 'Timeout';
+            
             // Log error but continue with other sources
-            console.error(`[Search Parallel] Source ${source.id} failed after ${latency}ms:`, error);
+            if (isTimeout) {
+              console.warn(`[Search Parallel] Source ${source.id} timed out after ${SEARCH_TIMEOUT_MS}ms`);
+            } else {
+              console.error(`[Search Parallel] Source ${source.id} failed after ${latency}ms:`, error);
+            }
+            
             completedSources++;
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
