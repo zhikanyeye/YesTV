@@ -33,6 +33,7 @@ interface UnifiedSourceSwitcherProps {
     // Optional pre-grouped sources (from search results with grouped mode)
     groupedSources?: SourceInfo[];
     // Current video information
+    videoId: string;  // Current video ID to preserve when switching sources
     videoTitle: string;
     currentSource: string;
     isPremium?: boolean;
@@ -43,6 +44,7 @@ interface UnifiedSourceSwitcherProps {
 
 export function UnifiedSourceSwitcher({
     groupedSources = [],
+    videoId,
     videoTitle,
     currentSource,
     isPremium = false,
@@ -253,11 +255,11 @@ export function UnifiedSourceSwitcher({
 
     // Handle source switch from search results
     const handleSourceSwitch = useCallback((video: SearchResult) => {
-        // Build new URL preserving the episode
+        // Build new URL preserving the current video ID and episode
         const params = new URLSearchParams();
-        params.set('id', String(video.vod_id));
-        params.set('source', video.source);
-        params.set('title', video.vod_name);
+        params.set('id', videoId);  // Keep the current video ID
+        params.set('source', video.source);  // Change only the source
+        params.set('title', videoTitle);  // Keep the current title
         params.set('episode', currentEpisode);
         
         if (isPremium) {
@@ -266,7 +268,7 @@ export function UnifiedSourceSwitcher({
 
         // Navigate to new source
         router.push(`/player?${params.toString()}`);
-    }, [router, currentEpisode, isPremium]);
+    }, [router, videoId, videoTitle, currentEpisode, isPremium]);
 
     // Initialize latencies from grouped sources
     useEffect(() => {

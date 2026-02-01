@@ -204,6 +204,7 @@ function PlayerContent() {
                 {/* Unified Source Switcher - handles both grouped and searched sources */}
                 <UnifiedSourceSwitcher
                   groupedSources={groupedSources}
+                  videoId={videoId}
                   videoTitle={title || videoData?.vod_name || ''}
                   currentSource={currentSourceId || source || ''}
                   isPremium={isPremium}
