@@ -208,14 +208,13 @@ function PlayerContent() {
                   currentSource={currentSourceId || source || ''}
                   isPremium={isPremium}
                   onSourceChange={(newSource) => {
-                    // Guard: ensure we have a valid video ID
-                    if (!videoId) return;
-                    
                     // Navigate to same video with different source
                     const params = new URLSearchParams();
-                    params.set('id', videoId);
+                    // CRITICAL FIX: Use the video ID from the new source, not the current source
+                    // Each source has different IDs for the same video content
+                    params.set('id', String(newSource.id));
                     params.set('source', newSource.source);
-                    params.set('title', title || '');
+                    params.set('title', title || videoData?.vod_name || '');
                     
                     // Preserve current episode
                     if (currentEpisode != null) {
