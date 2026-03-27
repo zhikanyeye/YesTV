@@ -1,0 +1,32 @@
+'use client';
+
+import { DesktopVideoPlayer } from './DesktopVideoPlayer';
+import { MobileVideoPlayer } from './MobileVideoPlayer';
+import { useIsMobile } from '@/lib/hooks/mobile/useDeviceDetection';
+
+
+interface CustomVideoPlayerProps {
+  src: string;
+  poster?: string;
+  onError?: (error: string) => void;
+  onTimeUpdate?: (currentTime: number, duration: number) => void;
+  onResolutionChange?: (resolution: { width: number; height: number } | null) => void;
+  initialTime?: number;
+  shouldAutoPlay?: boolean;
+  // Episode navigation props for auto-skip/auto-next
+  totalEpisodes?: number;
+  currentEpisodeIndex?: number;
+  onNextEpisode?: () => void;
+  isReversed?: boolean;
+}
+
+/**
+ * Smart Video Player that renders different versions based on device
+ * - Mobile/Tablet: Optimized touch controls, double-tap gestures, orientation lock
+ * - Desktop: Full-featured player with hover interactions
+ */
+export function CustomVideoPlayer(props: CustomVideoPlayerProps) {
+  const isMobile = useIsMobile();
+  if (isMobile) return <MobileVideoPlayer {...props} />;
+  return <DesktopVideoPlayer {...props} />;
+}
