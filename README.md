@@ -6,7 +6,16 @@
 
 仓库地址：<https://github.com/zhikanyeye/YesTV>
 
-品牌 Logo：当前默认品牌 Logo 文件为 `public/icon.png`，会同步用于网站图标与导航栏。
+## 🚀 一键部署
+
+<p align="left">
+  <a href="https://vercel.com/new/clone?repository-url=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Vercel-black?style=for-the-badge&logo=vercel" alt="Deploy with Vercel" /></a>
+  <a href="https://app.netlify.com/start/deploy?repository=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Netlify-00C7B7?style=for-the-badge&logo=netlify&logoColor=white" alt="Deploy with Netlify" /></a>
+  <a href="https://render.com/deploy?repo=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white" alt="Deploy with Render" /></a>
+  <br />
+  <a href="https://railway.app/new/template?template=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white" alt="Deploy with Railway" /></a>
+  <a href="https://dash.cloudflare.com/?to=/:account/pages/new/provider/github"><img src="https://img.shields.io/badge/Deploy-Cloudflare%20Pages-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Deploy with Cloudflare Pages" /></a>
+</p>
 
 ## 📖 项目简介
 
@@ -79,7 +88,6 @@
 - **内容隔离**：高级内容与普通内容完全物理隔离，互不干扰
 - **专属设置**：拥有独立的内容源管理和功能设置
 
-
 ## 🔐 隐私保护
 
 本应用注重用户隐私：
@@ -113,10 +121,12 @@ docker run -d -p 3000:3000 -e ACCESS_PASSWORD=your_premium_password --name yestv
 **Vercel 部署：**
 
 在 Vercel 项目设置中添加环境变量：
+
 - 变量名：`ACCESS_PASSWORD`
 - 变量值：你的密码
 
 **特点：**
+
 - **全局生效**：所有用户都需要此密码才能访问
 - **无法在界面删除**：只能通过修改环境变量更改
 - **与本地密码兼容**：两种密码都可以解锁应用
@@ -149,12 +159,14 @@ docker run -d -p 3000:3000 -e VIDEO_SOURCE_KEY="your_secret_key" --name yestv ye
 **Vercel 部署：**
 
 在 Vercel 项目设置中添加环境变量：
+
 - 变量名：`VIDEO_SOURCE_KEY`
 - 变量值：`your_secret_key`
 
 **Cloudflare Pages 部署：**
 
 在 Cloudflare Pages 项目设置中添加环境变量：
+
 - 变量名：`VIDEO_SOURCE_KEY`
 - 变量值：`your_secret_key`
 
@@ -171,11 +183,11 @@ docker run -d -p 3000:3000 -e VIDEO_SOURCE_KEY="your_secret_key" --name yestv ye
 
 ### 可用环境变量：
 
-| 变量名 | 说明 | 默认值 |
-|--------|------|--------|
-| `NEXT_PUBLIC_SITE_TITLE` | 浏览器标签页标题 | `YesTV - 视频聚合平台` |
-| `NEXT_PUBLIC_SITE_DESCRIPTION` | 站点描述 | `专属视频聚合播放平台，具备美观的 Liquid Glass UI` |
-| `NEXT_PUBLIC_SITE_NAME` | 站点头部名称 | `YesTV` |
+| 变量名                            | 说明       | 默认值                                |
+| ------------------------------ | -------- | ---------------------------------- |
+| `NEXT_PUBLIC_SITE_TITLE`       | 浏览器标签页标题 | `YesTV - 视频聚合平台`                   |
+| `NEXT_PUBLIC_SITE_DESCRIPTION` | 站点描述     | `专属视频聚合播放平台，具备美观的 Liquid Glass UI` |
+| `NEXT_PUBLIC_SITE_NAME`        | 站点头部名称   | `YesTV`                            |
 
 ### 配置示例：
 
@@ -187,10 +199,12 @@ docker run -d -p 3000:3000 -e VIDEO_SOURCE_KEY="your_secret_key" --name yestv ye
 
 **Cloudflare Pages 部署：**
 在 Cloudflare Pages 项目设置中添加环境变量：
+
 - 变量名：`NEXT_PUBLIC_SITE_NAME`
 - 变量值：`我的视频平台`
 
 **Docker 部署：**
+
 ```bash
 docker run -d -p 3000:3000 \
   -e NEXT_PUBLIC_SITE_NAME="我的视频平台" \
@@ -201,6 +215,7 @@ docker run -d -p 3000:3000 \
 
 **本地开发：**
 在项目根目录创建 `.env.local` 文件：
+
 ```env
 NEXT_PUBLIC_SITE_NAME=我的视频平台
 NEXT_PUBLIC_SITE_TITLE=我的视频 - 聚合播放平台
@@ -228,12 +243,14 @@ docker run -d -p 3000:3000 -e NEXT_PUBLIC_SUBSCRIPTION_SOURCES='[{"name":"MySour
 **Vercel 部署：**
 
 在 Vercel 项目设置中添加环境变量：
+
 - 变量名：`NEXT_PUBLIC_SUBSCRIPTION_SOURCES`
 - 变量值：`[{"name":"...","url":"..."}]`
 
 **Cloudflare Pages 部署：**
 
 在 Cloudflare Pages 项目设置中添加环境变量：
+
 - 变量名：`NEXT_PUBLIC_SUBSCRIPTION_SOURCES`
 - 变量值：`[{"name":"...","url":"..."}]`
 
@@ -247,14 +264,14 @@ docker run -d -p 3000:3000 -e NEXT_PUBLIC_SUBSCRIPTION_SOURCES='[{"name":"MySour
 
 **源对象字段说明：**
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `id` | string | 是 | 唯一标识符，建议使用英文 |
-| `name` | string | 是 | 显示名称 |
-| `baseUrl` | string | 是 | API 地址 (例如: `https://example.com/api.php/provide/vod`) |
-| `group` | string | 否 | 分组，可选值: `"normal"` (默认) 或 `"premium"` |
-| `enabled` | boolean | 否 | 是否启用，默认为 `true` |
-| `priority` | number | 否 | 优先级，数字越小优先级越高，默认为 1 |
+| 字段         | 类型      | 必填 | 说明                                                     |
+| ---------- | ------- | -- | ------------------------------------------------------ |
+| `id`       | string  | 是  | 唯一标识符，建议使用英文                                           |
+| `name`     | string  | 是  | 显示名称                                                   |
+| `baseUrl`  | string  | 是  | API 地址 (例如: `https://example.com/api.php/provide/vod`) |
+| `group`    | string  | 否  | 分组，可选值: `"normal"` (默认) 或 `"premium"`                  |
+| `enabled`  | boolean | 否  | 是否启用，默认为 `true`                                        |
+| `priority` | number  | 否  | 优先级，数字越小优先级越高，默认为 1                                    |
 
 **示例 JSON：**
 
@@ -286,7 +303,6 @@ docker run -d -p 3000:3000 -e NEXT_PUBLIC_SUBSCRIPTION_SOURCES='[{"name":"MySour
   - 例如：`https://api.example.com/vod`
   - 这种链接**不能**直接作为"订阅"添加
   - 只能在"自定义源管理"中作为单个源添加
-
 - **订阅源 (Subscription)**：
   - 指向一个 **JSON 文件**（如上面的示例）的 URL
   - 这个 JSON 文件里包含了一个或多个视频源的列表
@@ -300,13 +316,13 @@ docker run -d -p 3000:3000 -e NEXT_PUBLIC_SUBSCRIPTION_SOURCES='[{"name":"MySour
 
 ### 前端核心
 
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| **[Next.js](https://nextjs.org/)** | 16.0.3 | React 框架，使用 App Router |
-| **[React](https://react.dev/)** | 19.2.0 | UI 组件库 |
-| **[TypeScript](https://www.typescriptlang.org/)** | 5.x | 类型安全的 JavaScript |
-| **[Tailwind CSS](https://tailwindcss.com/)** | 4.x | 实用优先的 CSS 框架 |
-| **[Zustand](https://github.com/pmndrs/zustand)** | 5.0.2 | 轻量级状态管理 |
+| 技术                                                | 版本     | 用途                     |
+| ------------------------------------------------- | ------ | ---------------------- |
+| **[Next.js](https://nextjs.org/)**                | 16.0.3 | React 框架，使用 App Router |
+| **[React](https://react.dev/)**                   | 19.2.0 | UI 组件库                 |
+| **[TypeScript](https://www.typescriptlang.org/)** | 5.x    | 类型安全的 JavaScript       |
+| **[Tailwind CSS](https://tailwindcss.com/)**      | 4.x    | 实用优先的 CSS 框架           |
+| **[Zustand](https://github.com/pmndrs/zustand)**  | 5.0.2  | 轻量级状态管理                |
 
 ### 开发工具
 
@@ -345,6 +361,7 @@ npm start
 **想要参与开发？请查看 [贡献指南](CONTRIBUTING.md) 了解详细的开发规范和流程。**
 
 快速开始：
+
 1. **报告 Bug**：在 Issues 中提交问题
 2. **功能建议**：在 Issues 中提出你的想法
 3. **代码贡献**：Fork → Branch → PR
@@ -363,7 +380,7 @@ npm start
 - [Zustand](https://github.com/pmndrs/zustand) - 状态管理
 - [React](https://react.dev/) - UI 库
 
----
+***
 
 <div align="center">
   如果这个项目对你有帮助，请考虑给一个 ⭐️
