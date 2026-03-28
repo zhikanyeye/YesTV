@@ -1,10 +1,12 @@
 # YesTV
 
-![YesTV](public/icon.svg)
+![YesTV](public/icon.png)
 
 > 一个基于 Next.js 16 构建的现代化视频聚合播放平台。采用独特的 "Liquid Glass" 设计语言，提供流畅的视觉体验和强大的视频搜索功能。
 
 仓库地址：<https://github.com/zhikanyeye/YesTV>
+
+品牌 Logo：将你的 Logo 图片替换为 `public/icon.png` 即可同步更新网站图标与导航栏。
 
 ## 📖 项目简介
 

@@ -20,7 +20,7 @@ export function PlayerNavbar({ isPremium }: { isPremium?: boolean }) {
                             title={isPremium ? "返回高级主页" : "返回首页"}
                         >
                             <Image
-                                src="/icon.svg"
+                                src="/icon.png"
                                 alt={siteConfig.name}
                                 width={40}
                                 height={40}
