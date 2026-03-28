@@ -6,7 +6,32 @@
 
 仓库地址：<https://github.com/zhikanyeye/YesTV>
 
-## 🚀 一键部署
+## 🚀 部署指南
+
+本项目支持多种部署方式。你可以根据需要选择“新建独立项目”或“连接现有仓库持续部署”。
+
+### 方法一：连接现有仓库部署（推荐）
+
+这种方式会将你当前的 GitHub 仓库连接到部署平台。**当你推送代码到 GitHub 时，平台会自动触发构建和部署（CI/CD）。** 不会创建新的冗余仓库。
+
+**操作步骤：**
+1. 登录目标平台（如 Vercel, Netlify, Render 等）的控制台。
+2. 点击 **"Add New"** 或 **"New Project"**。
+3. 选择 **"Import an existing repository"**（导入现有仓库）。
+4. 在列表中选择你的 `zhikanyeye/YesTV` 仓库。
+5. 平台会自动读取仓库内的配置文件（如下表），点击 Deploy 即可。
+
+| 平台 | 自动识别来源 | 说明 |
+|------|-------------|------|
+| Vercel | `package.json` | 自动识别 Next.js 与 `npm run build` |
+| Netlify | `netlify.toml` | 自动使用 `npm run build` 与 Next Runtime |
+| Render | `render.yaml` | 自动创建 Web Service 并填充 build/start 命令 |
+| Railway | `nixpacks.toml` + `railway.json` | 自动按 Nixpacks 执行 install/build/start |
+| Cloudflare Pages | `package.json` | 需在控制台选择框架为 Next.js |
+
+### 方法二：一键模板部署（适合新建独立项目）
+
+点击下方按钮，平台会自动在你的 GitHub 账号下**克隆（Clone）一个全新的 YesTV 仓库**，并进行部署。适合想要分发给其他人一键搭建自己独立站点的场景。
 
 <p align="left">
   <a href="https://vercel.com/new/clone?repository-url=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Vercel-black?style=for-the-badge&logo=vercel" alt="Deploy with Vercel" /></a>
@@ -16,16 +41,6 @@
   <a href="https://railway.app/new/template?template=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white" alt="Deploy with Railway" /></a>
   <a href="https://dash.cloudflare.com/?to=/:account/pages/new/provider/github"><img src="https://img.shields.io/badge/Deploy-Cloudflare%20Pages-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Deploy with Cloudflare Pages" /></a>
 </p>
-
-已加入部署配置文件，导入仓库后会自动识别构建命令与启动命令：
-
-| 平台 | 自动识别来源 | 说明 |
-|------|-------------|------|
-| Vercel | `package.json` | 自动识别 Next.js 与 `npm run build` |
-| Netlify | `netlify.toml` | 自动使用 `npm run build` 与 Next Runtime |
-| Render | `render.yaml` | 自动创建 Web Service 并填充 build/start 命令 |
-| Railway | `nixpacks.toml` + `railway.json` | 自动按 Nixpacks 执行 install/build/start |
-| Cloudflare Pages | `package.json` | 仍需在控制台选择 Next.js，构建命令建议 `npm run pages:build` |
 
 ## 📖 项目简介
 
