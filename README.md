@@ -6,7 +6,7 @@
 
 仓库地址：<https://github.com/zhikanyeye/YesTV>
 
-品牌 Logo：将你的 Logo 图片替换为 `public/icon.png` 即可同步更新网站图标与导航栏。
+品牌 Logo：当前默认品牌 Logo 文件为 `public/icon.png`，会同步用于网站图标与导航栏。
 
 ## 📖 项目简介
 
@@ -290,7 +290,7 @@ docker run -d -p 3000:3000 -e NEXT_PUBLIC_SUBSCRIPTION_SOURCES='[{"name":"MySour
 - **订阅源 (Subscription)**：
   - 指向一个 **JSON 文件**（如上面的示例）的 URL
   - 这个 JSON 文件里包含了一个或多个视频源的列表
--  - 例如：`https://mysite.com/yestv-sources.json`
+  - 例如：`https://mysite.com/yestv-sources.json`
   - 这是一个**配置文件**的链接，不是视频 API 的链接
   - 只有这种返回 JSON 列表的链接才能在"订阅管理"中添加
 
