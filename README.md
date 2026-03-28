@@ -17,6 +17,16 @@
   <a href="https://dash.cloudflare.com/?to=/:account/pages/new/provider/github"><img src="https://img.shields.io/badge/Deploy-Cloudflare%20Pages-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Deploy with Cloudflare Pages" /></a>
 </p>
 
+已加入部署配置文件，导入仓库后会自动识别构建命令与启动命令：
+
+| 平台 | 自动识别来源 | 说明 |
+|------|-------------|------|
+| Vercel | `package.json` | 自动识别 Next.js 与 `npm run build` |
+| Netlify | `netlify.toml` | 自动使用 `npm run build` 与 Next Runtime |
+| Render | `render.yaml` | 自动创建 Web Service 并填充 build/start 命令 |
+| Railway | `nixpacks.toml` + `railway.json` | 自动按 Nixpacks 执行 install/build/start |
+| Cloudflare Pages | `package.json` | 仍需在控制台选择 Next.js，构建命令建议 `npm run pages:build` |
+
 ## 📖 项目简介
 
 本项目是一个高性能、现代化的视频聚合与播放应用，专注于提供极致的用户体验和视觉设计。结合 Next.js、React 与 Tailwind CSS，打造了一个既美观又强大的视频浏览平台。
