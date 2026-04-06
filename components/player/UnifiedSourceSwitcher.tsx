@@ -259,20 +259,15 @@ export function UnifiedSourceSwitcher({
 
     // Handle source switch from search results
     const handleSourceSwitch = useCallback((video: SearchResult) => {
-        // Build new URL preserving the current video ID and episode
+        // Build new URL with the correct ID and title from the search result
         const params = new URLSearchParams(searchParams.toString());
-        params.set('id', video.vod_id.toString());
-        params.set('source', video.source);  // Change only the source
-        params.set('title', videoTitle);  // Keep the current title
-        params.set('episode', currentEpisode);
-        
-        if (isPremium) {
-            params.set('premium', '1');
-        }
+        params.set('id', video.vod_id.toString()); // Use the ID from the search result
+        params.set('source', video.source); // Use the new source
+        params.set('title', video.vod_name); // Use the title from the search result
 
-        // Navigate to new source
+        // Navigate to the new source URL
         router.push(`/player?${params.toString()}`);
-    }, [router, videoId, videoTitle, currentEpisode, isPremium]);
+    }, [router, searchParams]);
 
     // Initialize latencies from grouped sources
     useEffect(() => {
