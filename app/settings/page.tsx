@@ -12,6 +12,7 @@ import { PasswordSettings } from '@/components/settings/PasswordSettings';
 import { DisplaySettings } from '@/components/settings/DisplaySettings';
 import { SettingsHeader } from '@/components/settings/SettingsHeader';
 import { UnlockPremiumSources } from '@/components/settings/UnlockPremiumSources';
+import { AboutSection } from '@/components/settings/AboutSection';
 import { useSettingsPage } from './hooks/useSettingsPage';
 
 export default function SettingsPage() {
@@ -108,6 +109,9 @@ export default function SettingsPage() {
           onImport={() => setIsImportModalOpen(true)}
           onReset={() => setIsResetDialogOpen(true)}
         />
+
+        {/* About Section */}
+        <AboutSection />
       </div>
 
       {/* Modals */}
