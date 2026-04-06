@@ -220,8 +220,8 @@ function PlayerContent() {
                     if (!videoId) return;
                     
                     // Navigate to same video with different source
-                    const params = new URLSearchParams();
-                    params.set('id', videoId);
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set('id', newSource.id.toString());
                     params.set('source', newSource.source);
                     params.set('title', title || '');
                     
