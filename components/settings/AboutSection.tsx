@@ -7,7 +7,7 @@ export function AboutSection() {
   return (
     <SettingsSection
       title="关于项目"
-      icon={<Icons.Info size={24} />}
+      icon={<Icons.AlertTriangle size={24} />}
     >
       <div className="space-y-4 text-[var(--text-color-secondary)]">
         <p>
