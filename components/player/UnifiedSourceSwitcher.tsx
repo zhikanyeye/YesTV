@@ -159,6 +159,10 @@ export function UnifiedSourceSwitcher({
         setIsLoading(false);
     }, [groupedSources, hasGroupedSources]);
 
+    useEffect(() => {
+        refreshLatencies();
+    }, [refreshLatencies]);
+
     // Search for alternative sources with timeout protection
     const handleSearch = useCallback(async () => {
         if (!videoTitle || isSearching) return;
@@ -256,8 +260,8 @@ export function UnifiedSourceSwitcher({
     // Handle source switch from search results
     const handleSourceSwitch = useCallback((video: SearchResult) => {
         // Build new URL preserving the current video ID and episode
-        const params = new URLSearchParams();
-        params.set('id', videoId);  // Keep the current video ID
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('id', video.vod_id.toString());
         params.set('source', video.source);  // Change only the source
         params.set('title', videoTitle);  // Keep the current title
         params.set('episode', currentEpisode);
@@ -317,17 +321,7 @@ export function UnifiedSourceSwitcher({
                         </Badge>
                     )}
                 </h3>
-                {hasGroupedSources && (
-                    <Button
-                        variant="secondary"
-                        onClick={refreshLatencies}
-                        disabled={isLoading}
-                        className="flex items-center gap-1.5 text-sm px-3 py-1.5"
-                    >
-                        <Icons.RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-                        刷新延迟
-                    </Button>
-                )}
+
             </div>
 
             {/* Show grouped sources if available */}

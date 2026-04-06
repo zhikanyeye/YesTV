@@ -155,16 +155,18 @@ function PlayerContent() {
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Video Player Section */}
             <div className="lg:col-span-2 space-y-6">
-              <VideoPlayer
-                playUrl={playUrl}
-                videoId={videoId || undefined}
-                currentEpisode={currentEpisode}
-                onBack={() => router.back()}
-                totalEpisodes={videoData?.episodes?.length || 1}
-                onNextEpisode={handleNextEpisode}
-                isReversed={isReversed}
-                isPremium={isPremium}
-              />
+              <div className="-mx-4 sm:mx-0">
+                <VideoPlayer
+                  playUrl={playUrl}
+                  videoId={videoId || undefined}
+                  currentEpisode={currentEpisode}
+                  onBack={() => router.back()}
+                  totalEpisodes={videoData?.episodes?.length || 1}
+                  onNextEpisode={handleNextEpisode}
+                  isReversed={isReversed}
+                  isPremium={isPremium}
+                />
+              </div>
               <ExternalPlayerLauncher
                 url={playUrl}
                 title={videoData?.vod_name || title || '未知视频'}

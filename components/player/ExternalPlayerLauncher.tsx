@@ -21,8 +21,10 @@ interface PlayerOption {
 function detectPlatform(): Platform {
   if (typeof navigator === 'undefined') return 'unknown';
   const ua = navigator.userAgent || '';
+  const maxTouchPoints = (navigator as any).maxTouchPoints || 0;
+  const iPadOsDesktopUa = navigator.platform === 'MacIntel' && maxTouchPoints > 1;
 
-  if (/iPad|iPhone|iPod/i.test(ua)) return 'ios';
+  if (iPadOsDesktopUa || /iPad|iPhone|iPod/i.test(ua)) return 'ios';
   if (/Android/i.test(ua)) return 'android';
   if (/Windows NT/i.test(ua)) return 'windows';
   if (/Macintosh|Mac OS X/i.test(ua)) return 'macos';
@@ -269,4 +271,3 @@ export function ExternalPlayerLauncher({ url, title }: { url: string; title?: st
     </>
   );
 }
-

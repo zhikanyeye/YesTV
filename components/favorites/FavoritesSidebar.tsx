@@ -85,10 +85,10 @@ export function FavoritesSidebar({ isPremium = false }: { isPremium?: boolean })
             {/* Toggle Button - Left side */}
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed left-6 top-1/2 -translate-y-1/2 z-40 bg-[var(--glass-bg)] backdrop-blur-[8px] saturate-[120%] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-md)] p-3 hover:scale-105 transition-transform duration-200 cursor-pointer"
+                className="fixed left-3 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] top-auto translate-y-0 sm:left-6 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 z-40 bg-[var(--glass-bg)] backdrop-blur-[8px] saturate-[120%] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-md)] p-2 sm:p-3 hover:scale-105 transition-transform duration-200 cursor-pointer"
                 aria-label="打开收藏夹"
             >
-                <Icons.Heart size={24} className="text-[var(--text-color)]" />
+                <Icons.Heart size={22} className="text-[var(--text-color)]" />
             </button>
 
             {/* Backdrop */}
@@ -109,7 +109,7 @@ export function FavoritesSidebar({ isPremium = false }: { isPremium?: boolean })
                     transform: isOpen ? 'translate3d(0, 0, 0)' : 'translate3d(-100%, 0, 0)',
                     willChange: isOpen ? 'transform' : 'auto'
                 }}
-                className={`fixed top-0 left-0 bottom-0 w-[85%] sm:w-[90%] max-w-[420px] z-[2000] bg-[var(--glass-bg)] backdrop-blur-[8px] saturate-[120%] border-r border-[var(--glass-border)] rounded-tr-[var(--radius-2xl)] rounded-br-[var(--radius-2xl)] p-6 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-transform duration-250 ease-out`}
+                className={`fixed top-0 left-0 bottom-0 w-[92%] sm:w-[85%] max-w-[420px] z-[2000] bg-[var(--glass-bg)] backdrop-blur-[8px] saturate-[120%] border-r border-[var(--glass-border)] rounded-tr-[var(--radius-2xl)] rounded-br-[var(--radius-2xl)] p-6 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-transform duration-250 ease-out`}
             >
                 <FavoritesHeader onClose={() => setIsOpen(false)} />
 

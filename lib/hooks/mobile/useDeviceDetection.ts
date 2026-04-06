@@ -8,9 +8,15 @@ export function useIsMobile() {
 
     useEffect(() => {
         const checkMobile = () => {
-            const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-                navigator.userAgent
-            ) || window.innerWidth < 768;
+            const ua = navigator.userAgent || '';
+            const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+            const maxTouchPoints = (navigator as any).maxTouchPoints || 0;
+            const iPadOsDesktopUa = navigator.platform === 'MacIntel' && maxTouchPoints > 1;
+            const coarsePointer = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+            const noHover = typeof window.matchMedia === 'function' && window.matchMedia('(hover: none)').matches;
+            const touchPrimary = !!(coarsePointer && noHover);
+
+            const mobile = uaMobile || iPadOsDesktopUa || touchPrimary || window.innerWidth < 768;
             setIsMobile(mobile);
         };
 
@@ -31,7 +37,10 @@ export function useIsIOS() {
 
     useEffect(() => {
         const checkIOS = () => {
-            const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+            const ua = navigator.userAgent || '';
+            const maxTouchPoints = (navigator as any).maxTouchPoints || 0;
+            const iPadOsDesktopUa = navigator.platform === 'MacIntel' && maxTouchPoints > 1;
+            const ios = (/iPad|iPhone|iPod/.test(ua) || iPadOsDesktopUa) && !(window as any).MSStream;
             setIsIOS(ios);
         };
 

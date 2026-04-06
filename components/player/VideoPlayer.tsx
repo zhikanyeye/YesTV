@@ -81,11 +81,11 @@ export function VideoPlayer({
     // Directly check HistoryStore for progress
     // We prioritize a strict match (including source), but fall back to any match for this video/episode
     // This fixes issues where the source parameter might be missing or different
-    const historyItem = viewingHistory.find(item =>
+    const historyItem = viewingHistory.find((item: any) =>
       item.videoId.toString() === videoId?.toString() &&
       item.episodeIndex === currentEpisode &&
       (source ? item.source === source : true)
-    ) || viewingHistory.find(item =>
+    ) || viewingHistory.find((item: any) =>
       item.videoId.toString() === videoId?.toString() &&
       item.episodeIndex === currentEpisode
     );
@@ -181,7 +181,7 @@ export function VideoPlayer({
   }
 
   return (
-    <Card hover={false} className="p-0 overflow-hidden relative">
+    <Card hover={false} className="p-0 overflow-hidden relative rounded-none sm:rounded-[var(--radius-2xl)]">
       {/* Resolution Indicator Badge - controlled by settings */}
       {showResolutionIndicator && videoResolution && videoResolution.width > 0 && videoResolution.height > 0 && (
         <div className="absolute top-3 left-3 z-30">

@@ -236,7 +236,7 @@ export function MobileVideoPlayer({
   return (
     <div
       ref={containerRef}
-      className="relative aspect-video bg-black rounded-[var(--radius-2xl)] overflow-hidden"
+      className="relative aspect-video bg-black rounded-none sm:rounded-[var(--radius-2xl)] overflow-hidden"
     >
       <video
         ref={videoRef}
@@ -323,4 +323,3 @@ export function MobileVideoPlayer({
     </div>
   );
 }
-
