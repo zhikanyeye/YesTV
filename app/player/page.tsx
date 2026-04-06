@@ -132,7 +132,7 @@ function PlayerContent() {
     if (nextEpisode) {
       handleEpisodeClick(nextEpisode, nextIndex); // handleEpisodeClick relies on state setters, which are stable
     }
-  }, [videoData, currentEpisode, isReversed, router, searchParams]); // handleEpisodeClick is not memoized, but uses stable hooks setters. wait, handleEpisodeClick is inline too!
+  }, [videoData, currentEpisode, isReversed, handleEpisodeClick]); // handleEpisodeClick is not memoized, but uses stable hooks setters. wait, handleEpisodeClick is inline too!
 
   return (
     <div className="min-h-screen bg-[var(--bg-color)]">
