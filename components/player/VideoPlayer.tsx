@@ -67,7 +67,7 @@ export function VideoPlayer({
 
   // Use reactive hook to subscribe to history updates
   // This ensures the component re-renders when history is hydrated from localStorage
-  const { viewingHistory, addToHistory } = useHistory(isPremium);
+  const { viewingHistory, addToHistory } = useHistory();
   const searchParams = useSearchParams();
 
   // Get video metadata from URL params
