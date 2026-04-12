@@ -8,118 +8,46 @@
 
 ## 🚀 部署指南
 
-本项目支持多种部署方式。你可以根据需要选择“新建独立项目”或“连接现有仓库持续部署”。
+### 环境变量配置
 
-### 方法一：连接现有仓库部署（推荐）
+在部署之前，你需要在你的托管平台（如 Vercel）上配置以下环境变量。这是让应用能够连接到数据库和认证服务的关键。
 
-这种方式会将你当前的 GitHub 仓库连接到部署平台。**当你推送代码到 GitHub 时，平台会自动触发构建和部署（CI/CD）。** 不会创建新的冗余仓库。
+| 变量名 | 说明 |
+| :--- | :--- |
+| `GITHUB_CLIENT_ID` | 你的 GitHub OAuth App 的 Client ID |
+| `GITHUB_CLIENT_SECRET` | 你的 GitHub OAuth App 的 Client Secret |
+| `QQ_APP_ID` | 你在 QQ 互联上申请的 App ID |
+| `QQ_APP_KEY` | 你在 QQ 互联上申请的 App Key |
+| `AUTH_SECRET` | 用于 NextAuth 加密会话的密钥，可以通过 `openssl rand -hex 32` 生成 |
+| `UPSTASH_REDIS_REST_URL` | 你在 Upstash 上创建的 Redis 数据库的 URL |
+| `UPSTASH_REDIS_REST_TOKEN` | 你在 Upstash 上创建的 Redis 数据库的 Token |
 
-**操作步骤：**
-1. 登录目标平台（如 Vercel, Netlify, Render 等）的控制台。
-2. 点击 **"Add New"** 或 **"New Project"**。
-3. 选择 **"Import an existing repository"**（导入现有仓库）。
-4. 在列表中选择你的 `zhikanyeye/YesTV` 仓库。
-5. 平台会自动读取仓库内的配置文件（如下表），点击 Deploy 即可。
+### Vercel 一键部署
 
-| 平台 | 自动识别来源 | 说明 |
-|------|-------------|------|
-| Vercel | `package.json` | 自动识别 Next.js 与 `npm run build` |
-| Netlify | `netlify.toml` | 自动使用 `npm run build` 与 Next Runtime |
-| Render | `render.yaml` | 自动创建 Web Service 并填充 build/start 命令 |
-| Railway | `nixpacks.toml` + `railway.json` | 自动按 Nixpacks 执行 install/build/start |
-| Cloudflare Pages | `package.json` | 需在控制台选择框架为 Next.js |
-
-### 方法二：一键模板部署（适合新建独立项目）
-
-点击下方按钮，平台会自动在你的 GitHub 账号下**克隆（Clone）一个全新的 YesTV 仓库**，并进行部署。适合想要分发给其他人一键搭建自己独立站点的场景。
+确保你已经 Fork 了本仓库，并且在 Vercel 上配置了上述所有环境变量后，点击下方按钮即可一键部署：
 
 <p align="left">
   <a href="https://vercel.com/new/clone?repository-url=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Vercel-black?style=for-the-badge&logo=vercel" alt="Deploy with Vercel" /></a>
-  <a href="https://app.netlify.com/start/deploy?repository=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Netlify-00C7B7?style=for-the-badge&logo=netlify&logoColor=white" alt="Deploy with Netlify" /></a>
-  <a href="https://render.com/deploy?repo=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white" alt="Deploy with Render" /></a>
-  <br />
-  <a href="https://railway.app/new/template?template=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white" alt="Deploy with Railway" /></a>
-  <a href="https://dash.cloudflare.com/?to=/:account/pages/new/provider/github"><img src="https://img.shields.io/badge/Deploy-Cloudflare%20Pages-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Deploy with Cloudflare Pages" /></a>
 </p>
-
-## 📖 项目简介
-
-本项目是一个高性能、现代化的视频聚合与播放应用，专注于提供极致的用户体验和视觉设计。结合 Next.js、React 与 Tailwind CSS，打造了一个既美观又强大的视频浏览平台。
-
-### 核心设计理念：Liquid Glass（液态玻璃）
-
-项目的视觉设计基于 **"Liquid Glass"** 设计系统，这是一套融合了以下特性的现代化 UI 设计语言：
-
-- **玻璃拟态效果**：通过 `backdrop-filter` 实现的磨砂半透明效果，让 UI 元素如同真实的玻璃材质
-- **通用柔和度**：统一使用 `rounded-2xl` 和 `rounded-full` 两种圆角半径，创造和谐的视觉体验
-- **光影交互**：悬停和聚焦状态下的内发光效果，模拟光线被"捕获"的物理现象
-- **流畅动画**：基于物理的 `cubic-bezier` 曲线，实现自然的加速和减速过渡
-- **深度层级**：清晰的 z-axis 层次结构，增强空间感和交互反馈
 
 ## ✨ 核心功能
 
-### 🎥 智能视频播放
-
-- **HLS 流媒体支持**：原生支持 HLS (.m3u8) 格式，提供流畅的视频播放体验
-- **智能缓存机制**：Service Worker 驱动的智能缓存系统，自动预加载和缓存视频片段
-- **后台下载**：利用观看历史，在后台自动下载历史视频，确保离线也能观看
-- **播放控制**：完整的播放控制功能，包括进度条、音量控制、播放速度调节、全屏模式等
-- **移动端优化**：专门为移动设备优化的播放器界面和手势控制
-
-### 🔍 多源并行搜索
-
-- **聚合搜索引擎**：同时在多个视频源中并行搜索，大幅提升搜索速度
-- **自定义视频源**：支持添加、编辑和管理自定义视频源
-- **智能解析**：统一的解析器系统，自动处理不同源的数据格式
-- **搜索历史**：自动保存搜索历史，支持快速重新搜索
-- **结果排序**：支持按评分、时间、相关性等多种方式排序搜索结果
-
-### 🎬 豆瓣集成
-
-- **电影 & 电视剧分类**：支持在电影和电视剧之间无缝切换，方便查找不同类型的影视资源
-- **详细影视信息**：自动获取豆瓣评分、演员阵容、剧情简介等详细信息
-- **推荐系统**：基于豆瓣数据的相关推荐
-- **专业评价**：展示豆瓣用户评价和专业影评
-
-### 💾 观看历史管理
-
-- **自动记录**：自动记录观看进度和历史
-- **断点续播**：从上次观看位置继续播放
-- **历史管理**：支持删除单条历史或清空全部历史
-- **隐私保护**：所有数据存储在本地，不上传到服务器
-
-### 📱 响应式设计
-
-- **全端适配**：完美支持桌面、平板和移动设备
-- **移动优先**：专门的移动端组件和交互设计
-- **触摸优化**：针对触摸屏优化的手势和交互
-
-### 🌙 主题系统
-
-- **深色/浅色模式**：支持系统级主题切换
-- **动态主题**：基于 CSS Variables 的动态主题系统
-- **无缝过渡**：主题切换时的平滑过渡动画
-
-### ⌨️ 无障碍设计
-
-- **键盘导航**：完整的键盘快捷键支持
-- **ARIA 标签**：符合 WCAG 2.2 标准的无障碍实现
-- **语义化 HTML**：使用语义化标签提升可访问性
-- **高对比度**：确保 4.5:1 的文字对比度
-
-### 💎 高级模式
-
-- **独立入口**：在浏览器地址栏直接输入 `/premium` 即可进入独立的高级视频专区
-- **内容隔离**：高级内容与普通内容完全物理隔离，互不干扰
-- **专属设置**：拥有独立的内容源管理和功能设置
+- **双认证登录系统**: 支持 **GitHub** 和 **QQ** 两种主流登录方式，由 `next-auth` 提供安全的会话管理。
+- **混合数据存储**: 
+  - **登录用户**: 收藏夹和播放历史会自动同步到 Upstash 云端数据库，实现跨设备无缝漫游。
+  - **游客用户**: 数据会优雅地回退到使用浏览器 `localStorage` 进行本地存储，不产生任何干扰。
+- **HLS 流媒体支持**：原生支持 HLS (.m3u8) 格式，提供流畅的视频播放体验。
+- **多源并行搜索**：同时在多个视频源中并行搜索，大幅提升搜索速度。
+- **响应式设计**：完美支持桌面、平板和移动设备。
+- **主题系统**：支持系统级深色/浅色模式切换。
 
 ## 🔐 隐私保护
 
 本应用注重用户隐私：
 
-- **本地存储**：所有数据存储在本地浏览器中
-- **无服务器数据**：不收集或上传任何用户数据
-- **自定义源**：用户可自行配置视频源
+- **游客模式**: 对于未登录的用户，所有数据（如播放历史、收藏夹）都只存储在用户本地的浏览器中，我们不收集或上传任何信息。
+- **登录模式**: 对于选择登录的用户，我们会通过 `next-auth` 获取一个与您的 GitHub/QQ 账户关联的、匿名的唯一ID。您的收藏夹和播放历史将被安全地存储在与此ID关联的云端数据库中，以便在您的不同设备间同步。我们绝不会获取您的任何个人敏感信息。
+- **开源透明**: 本项目完全开源，您可以随时审查代码以确认我们的隐私承诺。
 
 ## 🔒 密码访问控制
 
