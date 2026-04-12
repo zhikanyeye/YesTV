@@ -18,12 +18,12 @@ interface FavoritesState {
 
 interface FavoritesActions {
     setIsHydrated: (isHydrated: boolean) => void;
-    addFavorite: (item: Omit<FavoriteItem, 'addedAt'>) => void;
-    removeFavorite: (videoId: string | number, source: string) => void;
-    toggleFavorite: (item: Omit<FavoriteItem, 'addedAt'>) => boolean;
+    addFavorite: (item: Omit<FavoriteItem, 'addedAt'>) => void | Promise<void>;
+    removeFavorite: (videoId: string | number, source: string) => void | Promise<void>;
+    toggleFavorite: (item: Omit<FavoriteItem, 'addedAt'>) => boolean | Promise<boolean>;
     isFavorite: (videoId: string | number, source: string) => boolean;
-    clearFavorites: () => void;
-    importFavorites: (favorites: FavoriteItem[]) => void;
+    clearFavorites: () => void | Promise<void>;
+    importFavorites: (favorites: FavoriteItem[]) => void | Promise<void>;
 }
 
 interface FavoritesStore extends FavoritesState, FavoritesActions { }
