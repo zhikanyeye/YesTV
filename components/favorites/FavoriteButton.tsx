@@ -48,12 +48,12 @@ export const FavoriteButton = memo<FavoriteButtonProps>(({
         setIsFav(isFavorite(videoId, source));
     }, [videoId, source, isFavorite]);
 
-    const handleClick = useCallback((e: React.MouseEvent) => {
+    const handleClick = useCallback(async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
 
         setIsAnimating(true);
-        const newState = toggleFavorite({
+        const newState = await toggleFavorite({
             videoId,
             source,
             title,
