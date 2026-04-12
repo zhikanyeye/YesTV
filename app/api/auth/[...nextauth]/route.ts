@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import GithubProvider from "next-auth/providers/github";
-import QQProvider from "next-auth/providers/qq";
 
 export const authOptions = {
   providers: [
@@ -8,10 +7,40 @@ export const authOptions = {
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     }),
-    QQProvider({
+    {
+      id: "qq",
+      name: "QQ",
+      type: "oauth",
+      version: "2.0",
+      authorization: {
+        url: "https://graph.qq.com/oauth2.0/authorize",
+        params: { scope: "get_user_info" },
+      },
+      token: {
+        url: "https://graph.qq.com/oauth2.0/token",
+      },
+      userinfo: {
+        url: "https://graph.qq.com/oauth2.0/me",
+        async request(context: any) {
+          const me = await fetch(context.token.userinfo.url + "?access_token=" + context.token.access_token);
+          let openid = await me.text();
+          openid = JSON.parse(openid.replace(/callback\(|\);/g, '')).openid;
+          const user = await fetch(`https://graph.qq.com/user/get_user_info?access_token=${context.token.access_token}&oauth_consumer_key=${context.provider.clientId}&openid=${openid}`);
+          const qqUser = await user.json();
+          return { ...qqUser, id: openid };
+        }
+      },
+      profile(profile: any) {
+        return {
+          id: profile.id,
+          name: profile.nickname,
+          email: null,
+          image: profile.figureurl_qq_2 || profile.figureurl_qq_1,
+        };
+      },
       clientId: process.env.QQ_APP_ID!,
       clientSecret: process.env.QQ_APP_KEY!,
-    }),
+    },
   ],
   secret: process.env.AUTH_SECRET,
 };
