@@ -24,8 +24,7 @@ export function FavoritesSidebar({ isPremium = false }: { isPremium?: boolean })
         source?: string;
         isClearAll?: boolean;
     }>({ isOpen: false });
-    const { data: session } = useSession();
-    const { favorites, removeFavorite, clearFavorites } = useFavorites(session);
+    const { favorites, removeFavorite, clearFavorites } = useFavorites();
     const sidebarRef = useRef<HTMLElement>(null);
     const cleanupFocusTrapRef = useRef<(() => void) | null>(null);
 

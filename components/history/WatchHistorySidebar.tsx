@@ -23,8 +23,7 @@ export function WatchHistorySidebar({ isPremium = false }: { isPremium?: boolean
     source?: string;
     isClearAll?: boolean;
   }>({ isOpen: false });
-  const { data: session } = useSession();
-  const { viewingHistory, removeFromHistory, clearHistory } = useHistory(session);
+  const { viewingHistory, removeFromHistory, clearHistory } = useHistory();
   const sidebarRef = useRef<HTMLElement>(null);
   const cleanupFocusTrapRef = useRef<(() => void) | null>(null);
 

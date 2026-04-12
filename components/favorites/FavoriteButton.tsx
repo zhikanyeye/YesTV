@@ -39,8 +39,7 @@ export const FavoriteButton = memo<FavoriteButtonProps>(({
     showTooltip = true,
     isPremium = false,
 }) => {
-    const { data: session } = useSession();
-    const { isFavorite, toggleFavorite } = useFavorites(session);
+    const { isFavorite, toggleFavorite } = useFavorites();
     const [isAnimating, setIsAnimating] = useState(false);
     const [isFav, setIsFav] = useState(false);
 
