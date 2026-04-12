@@ -6,6 +6,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 import { useHistory } from '@/lib/store/history-store';
 import { Icons } from '@/components/ui/Icon';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -22,7 +23,8 @@ export function WatchHistorySidebar({ isPremium = false }: { isPremium?: boolean
     source?: string;
     isClearAll?: boolean;
   }>({ isOpen: false });
-  const { viewingHistory, removeFromHistory, clearHistory } = useHistory(isPremium);
+  const { data: session } = useSession();
+  const { viewingHistory, removeFromHistory, clearHistory } = useHistory(session);
   const sidebarRef = useRef<HTMLElement>(null);
   const cleanupFocusTrapRef = useRef<(() => void) | null>(null);
 

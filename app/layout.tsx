@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { Analytics } from "@vercel/analytics/react";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { PasswordGate } from "@/components/PasswordGate";
+import { StoreInitializer } from '@/components/StoreInitializer';
+import NextAuthProvider from "@/components/auth/NextAuthProvider";
 import { siteConfig } from "@/lib/config/site-config";
 
 
@@ -38,11 +40,14 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider>
+          <NextAuthProvider>
+            <StoreInitializer />
           <PasswordGate hasEnvPassword={!!process.env.ACCESS_PASSWORD}>
             {children}
           </PasswordGate>
           <Analytics />
           <ServiceWorkerRegister />
+        </NextAuthProvider>
         </ThemeProvider>
 
         {/* ARIA Live Region for Screen Reader Announcements */}

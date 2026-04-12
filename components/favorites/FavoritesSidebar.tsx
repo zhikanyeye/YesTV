@@ -6,6 +6,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 import { useFavorites } from '@/lib/store/favorites-store';
 import { WatchHistorySidebar } from '@/components/history/WatchHistorySidebar';
 import { Icons } from '@/components/ui/Icon';
@@ -23,7 +24,8 @@ export function FavoritesSidebar({ isPremium = false }: { isPremium?: boolean })
         source?: string;
         isClearAll?: boolean;
     }>({ isOpen: false });
-    const { favorites, removeFavorite, clearFavorites } = useFavorites(isPremium);
+    const { data: session } = useSession();
+    const { favorites, removeFavorite, clearFavorites } = useFavorites(session);
     const sidebarRef = useRef<HTMLElement>(null);
     const cleanupFocusTrapRef = useRef<(() => void) | null>(null);
 

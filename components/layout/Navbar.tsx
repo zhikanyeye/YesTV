@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
+import AuthButton from '@/components/auth/AuthButton';
 import { siteConfig } from '@/lib/config/site-config';
 
 interface NavbarProps {
@@ -52,6 +53,7 @@ export function Navbar({ onReset, isPremiumMode = false }: NavbarProps) {
                                 </svg>
                             </Link>
                             <ThemeSwitcher />
+                            <AuthButton />
                         </div>
                     </div>
                 </div>
