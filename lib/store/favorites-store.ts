@@ -71,8 +71,8 @@ const useLocalFavoritesStore = create<FavoritesStore>()(
                 const favoriteId = generateFavoriteId(videoId, source);
                 return get().favorites.some(fav => generateFavoriteId(fav.videoId, fav.source) === favoriteId);
             },
-            clearFavorites: () => set({ favorites: [] }),
-            importFavorites: (favorites) => set({ favorites }),
+            clearFavorites: () => { set({ favorites: [] }); },
+            importFavorites: (favorites) => { set({ favorites }); },
         }),
         {
             name: 'kvideo-favorites-store',
