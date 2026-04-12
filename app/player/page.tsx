@@ -21,7 +21,7 @@ function PlayerContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const isPremium = searchParams.get('premium') === '1';
-  const { addToHistory } = useHistory(isPremium);
+  const { addToHistory } = useHistory();
 
   const videoId = searchParams.get('id');
   const source = searchParams.get('source');
