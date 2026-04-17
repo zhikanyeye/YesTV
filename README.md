@@ -8,25 +8,24 @@
 
 ## 🚀 部署指南
 
-### README 现状
+想要快速上线？先记住一句话：
 
-是的，README 已更新为详细部署版（包含 Vercel、Cloudflare Pages、Netlify、Railway、Render、Docker，以及静态托管限制说明）。
+> 新手首选 Vercel，追求边缘网络可选 Cloudflare Pages，自托管就用 Docker。
 
-### 平台兼容矩阵
+### 🌈 平台选择一览
 
-| 平台 | 是否推荐 | 说明 |
-| :--- | :--- | :--- |
-| Vercel | ✅ 推荐 | 支持一键导入，最省心 |
-| Cloudflare Pages | ✅ 推荐 | 支持 Git 集成部署（接近一键） |
-| Netlify | ✅ 可用 | 已包含 Next.js 插件配置 |
-| Railway / Render | ✅ 可用 | 走 Node 服务模式 |
-| Docker / VPS | ✅ 可用 | 最灵活，适合自托管 |
-| 纯静态托管（GitHub Pages 等） | ❌ 不推荐 | 无法运行 NextAuth 与 API 路由 |
+本项目是完整 Next.js 应用（含 API Routes、NextAuth、Redis 同步），需要支持服务端运行时。
 
-### 一键部署说明
+| 平台 | 推荐度 | 适合人群 | 说明 |
+| :--- | :--- | :--- | :--- |
+| Vercel | ⭐⭐⭐⭐⭐ | 想最快上线 | 官方适配最好，配置最省心 |
+| Cloudflare Pages | ⭐⭐⭐⭐ | 追求全球边缘网络 | 支持 Git 集成 + Functions |
+| Netlify | ⭐⭐⭐ | 已在用 Netlify 的团队 | 已内置 Next.js 插件配置 |
+| Railway / Render | ⭐⭐⭐ | 偏后端部署思路 | 按 Node 服务模式运行 |
+| Docker / VPS | ⭐⭐⭐⭐ | 要自托管/私有化 | 灵活度最高，可完全掌控 |
+| 纯静态托管（GitHub Pages 等） | ❌ | 仅静态站 | 本项目不适用 |
 
-- Vercel：支持官方一键部署按钮。
-- Cloudflare Pages：不支持和 Workers 一样的 Deploy 按钮一键拉起，但支持 Git 导入自动部署（操作上接近一键）。
+### ⚡ 快速入口
 
 Vercel 一键部署：
 
@@ -34,9 +33,11 @@ Vercel 一键部署：
   <a href="https://vercel.com/new/clone?repository-url=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Vercel-black?style=for-the-badge&logo=vercel" alt="Deploy with Vercel" /></a>
 </p>
 
-### 环境变量清单（按重要性）
+Cloudflare 补充说明：Deploy Button 主要用于 Workers；Pages 请使用 Git 集成流程（下面有完整步骤）。
 
-#### 必填（启用登录 + 云端同步）
+### 🧩 环境变量速查
+
+#### 必填（登录 + 云端同步）
 
 | 变量名 | 说明 |
 | :--- | :--- |
@@ -48,11 +49,11 @@ Vercel 一键部署：
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST URL |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST Token |
 
-#### 可选（功能增强）
+#### 选填（增强功能）
 
 | 变量名 | 说明 |
 | :--- | :--- |
-| `ADMIN_USER_IDS` | 管理员用户 ID 列表，多个用英文逗号分隔。示例：`github_123,qq_oAbCdEf` |
+| `ADMIN_USER_IDS` | 管理员用户 ID 列表，多个值使用英文逗号分隔。示例：`github_123,qq_oAbCdEf` |
 | `ACCESS_PASSWORD` | 全局访问密码 |
 | `VIDEO_SOURCE_KEY` | 高级视频源解锁密钥 |
 | `NEXT_PUBLIC_SITE_NAME` | 站点名称 |
@@ -60,45 +61,46 @@ Vercel 一键部署：
 | `NEXT_PUBLIC_SITE_DESCRIPTION` | 站点描述 |
 | `NEXT_PUBLIC_SUBSCRIPTION_SOURCES` | 预置订阅源 JSON |
 
-### 部署前检查（建议按顺序）
+### ✅ 上线前检查清单
 
-1. Fork 或克隆本仓库。
-2. 在目标平台创建项目并连接 GitHub 仓库。
-3. 配置环境变量（至少先填必填项）。
-4. 确认 Node 版本为 20+（推荐 22）。
-5. 首次部署后，用管理员账号先登录一次，再把该用户 ID 写入 `ADMIN_USER_IDS`。
+1. Fork 或克隆仓库，并确认默认分支。
+2. 在目标平台创建项目并连接 Git 仓库。
+3. 配置环境变量（优先填写必填项）。
+4. 确认 Node.js 版本不低于 20（推荐 22）。
+5. 首次部署成功后，用目标管理员账号登录一次并记录用户 ID。
+6. 将该用户 ID 写入 `ADMIN_USER_IDS` 后重新部署。
 
-### 详细部署步骤
+### 🛠 分平台部署步骤
 
-#### 1) Vercel（推荐）
+#### 1) Vercel（推荐新手）
 
-1. 点击上方 Deploy 按钮，导入仓库。
-2. 在 Environment Variables 中填写所有必填环境变量。
-3. Build Command 使用默认：`next build`。
-4. 首次部署完成后，访问站点并登录。
-5. 到设置页查看用户 ID，回到 Vercel 补充 `ADMIN_USER_IDS`，重新部署。
+1. 使用上方按钮或在 Vercel 控制台导入仓库。
+2. 在 Project Settings -> Environment Variables 填写环境变量。
+3. Build Command 保持默认：`next build`。
+4. 首次部署后登录站点，获取管理员用户 ID。
+5. 补充 `ADMIN_USER_IDS` 并执行一次重新部署。
 
-#### 2) Cloudflare Pages（推荐）
+#### 2) Cloudflare Pages（推荐进阶）
 
-说明：Cloudflare 的 Deploy 按钮目前主要面向 Workers 应用；Pages 推荐使用 Git 集成流程。
+Cloudflare Pages 建议使用 Git 集成流程：
 
 1. Cloudflare Dashboard -> Workers & Pages -> Create -> Pages -> Connect to Git。
 2. 选择本仓库与分支（例如 main）。
-3. Build 设置：
-  - Build command: `npm run pages:build`
-  - Build output directory: `.vercel/output/static`
-4. 在 Environment Variables 中填写必填与可选变量。
-5. 保存并部署。
-6. 首次登录后，把管理员 ID 写入 `ADMIN_USER_IDS` 并触发重新部署。
+3. 配置构建参数：
+   - Build command: `npm run pages:build`
+   - Build output directory: `.vercel/output/static`
+4. 配置环境变量（必填 + 可选）。
+5. 保存并触发部署。
+6. 完成管理员初始化后更新 `ADMIN_USER_IDS`，再次部署。
 
 #### 3) Netlify
 
 仓库已包含 `netlify.toml` 与 `@netlify/plugin-nextjs`。
 
-1. New site from Git，连接仓库。
+1. 使用 New site from Git 连接仓库。
 2. Build command: `npm run build`。
-3. Environment variables：填写必填与可选变量。
-4. Deploy。
+3. 配置环境变量。
+4. 执行首次部署并完成管理员初始化。
 
 #### 4) Railway / Render
 
@@ -107,7 +109,7 @@ Vercel 一键部署：
 3. Start command: `npm start`。
 4. 配置所有环境变量后部署。
 
-#### 5) Docker / 自托管
+#### 5) Docker / 自托管（推荐服务器党）
 
 1. 构建镜像：
 
@@ -119,14 +121,14 @@ Vercel 一键部署：
 
 3. 访问 `http://localhost:3000`。
 
-### 静态托管说明（重要）
+### ⚠️ 纯静态托管限制
 
 本项目包含 NextAuth 与多条 API Route（收藏、历史、管理员、代理、搜索流等），因此不是纯静态站点。
 
-- 可运行：Vercel、Cloudflare Pages（Functions）、Netlify、Railway、Render、Docker。
-- 不建议直接上纯静态 CDN（GitHub Pages、纯 OSS 静态托管、无函数能力的静态空间）。
+- 可运行平台：Vercel、Cloudflare Pages（Functions）、Netlify、Railway、Render、Docker。
+- 不建议直接部署到纯静态 CDN（如 GitHub Pages 或无函数能力的对象存储站点）。
 
-如果你必须使用纯静态托管，只能做功能阉割版（移除登录、云同步、管理员与所有服务端 API）。
+若必须使用纯静态托管，仅可构建精简版本：移除登录、云同步、管理员功能及全部服务端 API。
 
 ## ✨ 核心功能
 
