@@ -157,7 +157,7 @@ export function useHistory() {
                     const response = await fetch(`/api/history?userId=${session.user.id}`);
                     if (response.ok) {
                         const history = await response.json();
-                        remoteStore.setState({ viewingHistory: history, isHydrated: true });
+                        useRemoteHistoryStore.setState({ viewingHistory: history, isHydrated: true });
                     }
                 } catch (error) {
                     console.error('Failed to fetch remote history:', error);

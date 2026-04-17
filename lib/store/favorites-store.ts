@@ -159,7 +159,7 @@ export function useFavorites() {
                     const response = await fetch(`/api/favorites?userId=${session.user.id}`);
                     if (response.ok) {
                         const favorites = await response.json();
-                        remoteStore.setState({ favorites, isHydrated: true });
+                        useRemoteFavoritesStore.setState({ favorites, isHydrated: true });
                     }
                 } catch (error) {
                     console.error('Failed to fetch remote favorites:', error);
