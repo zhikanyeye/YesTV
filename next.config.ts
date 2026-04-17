@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
-import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+
+const isLocalDev = process.env.NODE_ENV === "development" && !process.env.VERCEL;
 
 const nextConfig: NextConfig = {
   // Performance optimizations
@@ -118,4 +119,8 @@ const nextConfig: NextConfig = {
 
 export default nextConfig;
 
-initOpenNextCloudflareForDev();
+if (isLocalDev) {
+  void import("@opennextjs/cloudflare").then(({ initOpenNextCloudflareForDev }) => {
+    initOpenNextCloudflareForDev();
+  });
+}
