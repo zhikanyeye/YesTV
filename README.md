@@ -8,27 +8,125 @@
 
 ## 🚀 部署指南
 
-### 环境变量配置
+### README 现状
 
-在部署之前，你需要在你的托管平台（如 Vercel）上配置以下环境变量。这是让应用能够连接到数据库和认证服务的关键。
+是的，README 已更新为详细部署版（包含 Vercel、Cloudflare Pages、Netlify、Railway、Render、Docker，以及静态托管限制说明）。
 
-| 变量名 | 说明 |
-| :--- | :--- |
-| `GITHUB_CLIENT_ID` | 你的 GitHub OAuth App 的 Client ID |
-| `GITHUB_CLIENT_SECRET` | 你的 GitHub OAuth App 的 Client Secret |
-| `QQ_APP_ID` | 你在 QQ 互联上申请的 App ID |
-| `QQ_APP_KEY` | 你在 QQ 互联上申请的 App Key |
-| `AUTH_SECRET` | 用于 NextAuth 加密会话的密钥，可以通过 `openssl rand -hex 32` 生成 |
-| `UPSTASH_REDIS_REST_URL` | 你在 Upstash 上创建的 Redis 数据库的 URL |
-| `UPSTASH_REDIS_REST_TOKEN` | 你在 Upstash 上创建的 Redis 数据库的 Token |
+### 平台兼容矩阵
 
-### Vercel 一键部署
+| 平台 | 是否推荐 | 说明 |
+| :--- | :--- | :--- |
+| Vercel | ✅ 推荐 | 支持一键导入，最省心 |
+| Cloudflare Pages | ✅ 推荐 | 支持 Git 集成部署（接近一键） |
+| Netlify | ✅ 可用 | 已包含 Next.js 插件配置 |
+| Railway / Render | ✅ 可用 | 走 Node 服务模式 |
+| Docker / VPS | ✅ 可用 | 最灵活，适合自托管 |
+| 纯静态托管（GitHub Pages 等） | ❌ 不推荐 | 无法运行 NextAuth 与 API 路由 |
 
-确保你已经 Fork 了本仓库，并且在 Vercel 上配置了上述所有环境变量后，点击下方按钮即可一键部署：
+### 一键部署说明
+
+- Vercel：支持官方一键部署按钮。
+- Cloudflare Pages：不支持和 Workers 一样的 Deploy 按钮一键拉起，但支持 Git 导入自动部署（操作上接近一键）。
+
+Vercel 一键部署：
 
 <p align="left">
   <a href="https://vercel.com/new/clone?repository-url=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Vercel-black?style=for-the-badge&logo=vercel" alt="Deploy with Vercel" /></a>
 </p>
+
+### 环境变量清单（按重要性）
+
+#### 必填（启用登录 + 云端同步）
+
+| 变量名 | 说明 |
+| :--- | :--- |
+| `GITHUB_CLIENT_ID` | GitHub OAuth App 的 Client ID |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth App 的 Client Secret |
+| `QQ_APP_ID` | QQ 互联 App ID |
+| `QQ_APP_KEY` | QQ 互联 App Key |
+| `AUTH_SECRET` | NextAuth 会话加密密钥，建议用 `openssl rand -hex 32` 生成 |
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST URL |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST Token |
+
+#### 可选（功能增强）
+
+| 变量名 | 说明 |
+| :--- | :--- |
+| `ADMIN_USER_IDS` | 管理员用户 ID 列表，多个用英文逗号分隔。示例：`github_123,qq_oAbCdEf` |
+| `ACCESS_PASSWORD` | 全局访问密码 |
+| `VIDEO_SOURCE_KEY` | 高级视频源解锁密钥 |
+| `NEXT_PUBLIC_SITE_NAME` | 站点名称 |
+| `NEXT_PUBLIC_SITE_TITLE` | 浏览器标题 |
+| `NEXT_PUBLIC_SITE_DESCRIPTION` | 站点描述 |
+| `NEXT_PUBLIC_SUBSCRIPTION_SOURCES` | 预置订阅源 JSON |
+
+### 部署前检查（建议按顺序）
+
+1. Fork 或克隆本仓库。
+2. 在目标平台创建项目并连接 GitHub 仓库。
+3. 配置环境变量（至少先填必填项）。
+4. 确认 Node 版本为 20+（推荐 22）。
+5. 首次部署后，用管理员账号先登录一次，再把该用户 ID 写入 `ADMIN_USER_IDS`。
+
+### 详细部署步骤
+
+#### 1) Vercel（推荐）
+
+1. 点击上方 Deploy 按钮，导入仓库。
+2. 在 Environment Variables 中填写所有必填环境变量。
+3. Build Command 使用默认：`next build`。
+4. 首次部署完成后，访问站点并登录。
+5. 到设置页查看用户 ID，回到 Vercel 补充 `ADMIN_USER_IDS`，重新部署。
+
+#### 2) Cloudflare Pages（推荐）
+
+说明：Cloudflare 的 Deploy 按钮目前主要面向 Workers 应用；Pages 推荐使用 Git 集成流程。
+
+1. Cloudflare Dashboard -> Workers & Pages -> Create -> Pages -> Connect to Git。
+2. 选择本仓库与分支（例如 main）。
+3. Build 设置：
+  - Build command: `npm run pages:build`
+  - Build output directory: `.vercel/output/static`
+4. 在 Environment Variables 中填写必填与可选变量。
+5. 保存并部署。
+6. 首次登录后，把管理员 ID 写入 `ADMIN_USER_IDS` 并触发重新部署。
+
+#### 3) Netlify
+
+仓库已包含 `netlify.toml` 与 `@netlify/plugin-nextjs`。
+
+1. New site from Git，连接仓库。
+2. Build command: `npm run build`。
+3. Environment variables：填写必填与可选变量。
+4. Deploy。
+
+#### 4) Railway / Render
+
+1. 连接 GitHub 仓库。
+2. Build command: `npm install && npm run build`。
+3. Start command: `npm start`。
+4. 配置所有环境变量后部署。
+
+#### 5) Docker / 自托管
+
+1. 构建镜像：
+
+  `docker build -t yestv .`
+
+2. 启动容器（示例）：
+
+  `docker run -d --name yestv -p 3000:3000 -e AUTH_SECRET=your_secret -e GITHUB_CLIENT_ID=xxx -e GITHUB_CLIENT_SECRET=xxx -e QQ_APP_ID=xxx -e QQ_APP_KEY=xxx -e UPSTASH_REDIS_REST_URL=xxx -e UPSTASH_REDIS_REST_TOKEN=xxx -e ADMIN_USER_IDS=your_user_id yestv`
+
+3. 访问 `http://localhost:3000`。
+
+### 静态托管说明（重要）
+
+本项目包含 NextAuth 与多条 API Route（收藏、历史、管理员、代理、搜索流等），因此不是纯静态站点。
+
+- 可运行：Vercel、Cloudflare Pages（Functions）、Netlify、Railway、Render、Docker。
+- 不建议直接上纯静态 CDN（GitHub Pages、纯 OSS 静态托管、无函数能力的静态空间）。
+
+如果你必须使用纯静态托管，只能做功能阉割版（移除登录、云同步、管理员与所有服务端 API）。
 
 ## ✨ 核心功能
 
