@@ -26,4 +26,17 @@
 
 .no-spinner {
   -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.layer-gpu {
+  transform: translate3d(0, 0, 0);
+}
+
+.layer-will-change-transform {
+  will-change: transform;
+}
+
+.z-search-panel {
+  z-index: 1000;
 }

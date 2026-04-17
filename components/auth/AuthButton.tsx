@@ -7,14 +7,22 @@ import { useState } from 'react';
 export default function AuthButton() {
   const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const userDisplayName = session?.user?.name || '用户';
 
   if (session) {
     return (
       <div className="relative">
-        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex items-center gap-2">
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="flex items-center gap-2"
+          aria-label={`${userDisplayName}账户菜单`}
+          title={`${userDisplayName}账户菜单`}
+          aria-haspopup="menu"
+          type="button"
+        >
           <Image
             src={session.user?.image ?? ''}
-            alt={session.user?.name ?? ''}
+            alt={userDisplayName}
             width={32}
             height={32}
             className="rounded-full"
@@ -36,7 +44,14 @@ export default function AuthButton() {
 
   return (
     <div className="relative">
-      <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-sm font-medium">登录</button>
+      <button
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        className="text-sm font-medium"
+        aria-haspopup="menu"
+        type="button"
+      >
+        登录
+      </button>
       {isMenuOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
           <button

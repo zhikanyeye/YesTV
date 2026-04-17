@@ -28,10 +28,7 @@ function PremiumHomePage() {
             <Navbar onReset={handleReset} isPremiumMode={true} />
 
             {/* Search Form - Separate from navbar */}
-            <div className="max-w-7xl mx-auto px-4 mt-6 mb-8 relative" style={{
-                transform: 'translate3d(0, 0, 0)',
-                zIndex: 1000
-            }}>
+            <div className="max-w-7xl mx-auto px-4 mt-6 mb-8 relative layer-gpu z-search-panel">
                 <SearchForm
                     onSearch={handleSearch}
                     onClear={handleReset}

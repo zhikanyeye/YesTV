@@ -42,6 +42,20 @@ export const authOptions: AuthOptions = {
       clientSecret: process.env.QQ_APP_KEY!,
     },
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user?.id) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = (token.id as string) || token.sub || "";
+      }
+      return session;
+    },
+  },
   secret: process.env.AUTH_SECRET,
 };
 
