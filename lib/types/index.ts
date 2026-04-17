@@ -109,6 +109,19 @@ export interface FavoriteItem {
   remarks?: string; // e.g., episode info
 }
 
+// Managed user profile for account administration
+export interface ManagedUser {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  createdAt: number;
+  lastLoginAt: number;
+  banned: boolean;
+  banReason?: string | null;
+  bannedAt?: number | null;
+}
+
 // API Response Structures
 export interface ApiSearchResponse {
   code: number;

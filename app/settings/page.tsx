@@ -13,6 +13,7 @@ import { DisplaySettings } from '@/components/settings/DisplaySettings';
 import { SettingsHeader } from '@/components/settings/SettingsHeader';
 import { UnlockPremiumSources } from '@/components/settings/UnlockPremiumSources';
 import { AboutSection } from '@/components/settings/AboutSection';
+import { AccountSection } from '@/components/settings/AccountSection';
 import { useSettingsPage } from './hooks/useSettingsPage';
 
 export default function SettingsPage() {
@@ -61,6 +62,9 @@ export default function SettingsPage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl space-y-8">
         {/* Header */}
         <SettingsHeader />
+
+        {/* Account Management */}
+        <AccountSection />
 
         {/* Password Settings */}
         <PasswordSettings

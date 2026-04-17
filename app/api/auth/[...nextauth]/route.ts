@@ -1,5 +1,6 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
+import { isUserBanned, upsertManagedUser } from '@/lib/user-management';
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -43,6 +44,25 @@ export const authOptions: AuthOptions = {
     },
   ],
   callbacks: {
+    async signIn({ user }) {
+      if (!user?.id) {
+        return false;
+      }
+
+      const banned = await isUserBanned(user.id);
+      if (banned) {
+        return false;
+      }
+
+      await upsertManagedUser({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+      });
+
+      return true;
+    },
     async jwt({ token, user }) {
       if (user?.id) {
         token.id = user.id;
