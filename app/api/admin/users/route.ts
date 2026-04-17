@@ -7,7 +7,6 @@ import {
   unbanManagedUser,
 } from '@/lib/user-management';
 
-export const runtime = 'edge';
 
 type UserAction = 'ban' | 'unban' | 'delete';
 
@@ -72,3 +71,4 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }
+

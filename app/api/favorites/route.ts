@@ -3,7 +3,6 @@ import { db } from '@/lib/db';
 import { getRequestAuthContext } from '@/lib/auth/request-auth';
 import { isUserBanned } from '@/lib/user-management';
 
-export const runtime = 'edge';
 
 async function resolveTargetUserId(req: NextRequest): Promise<string | null> {
   const auth = await getRequestAuthContext(req);
@@ -59,3 +58,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to update favorites' }, { status: 500 });
   }
 }
+

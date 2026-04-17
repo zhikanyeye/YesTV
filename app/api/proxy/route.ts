@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { processM3u8Content } from '@/lib/utils/proxy-utils';
 import { fetchWithRetry } from '@/lib/utils/fetch-with-retry';
 
-export const runtime = 'edge';
 
 // Disable SSL verification for video sources with invalid certificates
 // Note: This is not supported in Cloudflare Workers/Edge Runtime.
@@ -127,3 +126,4 @@ export async function OPTIONS(request: NextRequest) {
         },
     });
 }
+

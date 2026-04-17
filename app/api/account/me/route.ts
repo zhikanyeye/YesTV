@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getRequestAuthContext } from '@/lib/auth/request-auth';
 import { getManagedUser } from '@/lib/user-management';
 
-export const runtime = 'edge';
 
 export async function GET(req: NextRequest) {
   const auth = await getRequestAuthContext(req);
@@ -30,3 +29,4 @@ export async function GET(req: NextRequest) {
     },
   });
 }
+

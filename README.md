@@ -10,7 +10,7 @@
 
 想要快速上线？先记住一句话：
 
-> 新手首选 Vercel，追求边缘网络可选 Cloudflare Pages，自托管就用 Docker。
+> 新手首选 Vercel，追求边缘网络建议 Cloudflare Workers（OpenNext），自托管就用 Docker。
 
 ### 🌈 平台选择一览
 
@@ -19,7 +19,7 @@
 | 平台 | 推荐度 | 适合人群 | 说明 |
 | :--- | :--- | :--- | :--- |
 | Vercel | ⭐⭐⭐⭐⭐ | 想最快上线 | 官方适配最好，配置最省心 |
-| Cloudflare Pages | ⭐⭐⭐⭐ | 追求全球边缘网络 | 支持 Git 集成 + Functions |
+| Cloudflare Workers（OpenNext） | ⭐⭐⭐⭐ | 追求全球边缘网络 | 使用 `@opennextjs/cloudflare` 官方适配 |
 | Netlify | ⭐⭐⭐ | 已在用 Netlify 的团队 | 已内置 Next.js 插件配置 |
 | Railway / Render | ⭐⭐⭐ | 偏后端部署思路 | 按 Node 服务模式运行 |
 | Docker / VPS | ⭐⭐⭐⭐ | 要自托管/私有化 | 灵活度最高，可完全掌控 |
@@ -33,7 +33,7 @@ Vercel 一键部署：
   <a href="https://vercel.com/new/clone?repository-url=https://github.com/zhikanyeye/YesTV"><img src="https://img.shields.io/badge/Deploy-Vercel-black?style=for-the-badge&logo=vercel" alt="Deploy with Vercel" /></a>
 </p>
 
-Cloudflare 补充说明：Deploy Button 主要用于 Workers；Pages 请使用 Git 集成流程（下面有完整步骤）。
+Cloudflare 补充说明：项目已迁移到 OpenNext 方案，推荐使用 Workers 工作流。
 
 ### 🧩 环境变量速查
 
@@ -80,16 +80,21 @@ Cloudflare 补充说明：Deploy Button 主要用于 Workers；Pages 请使用 G
 4. 首次部署后登录站点，获取管理员用户 ID。
 5. 补充 `ADMIN_USER_IDS` 并执行一次重新部署。
 
-#### 2) Cloudflare Pages（推荐进阶）
+#### 2) Cloudflare Workers（OpenNext，推荐进阶）
 
-1. Cloudflare Dashboard -> Workers & Pages -> Create -> Pages -> Connect to Git。
-2. 选择本仓库与分支（例如 main）。
-3. 配置构建参数：
-  - Build command: `npm run pages:build`
-  - Build output directory: `.vercel/output/static`
-4. 配置环境变量（必填 + 可选）。
-5. 保存并触发部署。
-6. 完成管理员初始化后更新 `ADMIN_USER_IDS`，再次部署。
+1. 首次安装依赖：`npm install`。
+2. 本地预览：`npm run cf:preview`。
+3. 首次部署：`npm run cf:deploy`。
+4. 需要仅上传版本时：`npm run cf:upload`。
+5. 可选生成类型：`npm run cf:typegen`。
+
+关键文件：
+
+- `wrangler.jsonc`：Worker 入口与资源绑定配置。
+- `open-next.config.ts`：OpenNext Cloudflare 适配配置。
+- `.dev.vars`：本地开发环境变量。
+
+说明：OpenNext 不建议继续使用 `runtime = "edge"`，项目已统一迁移为 Node.js runtime。
 
 #### 3) Netlify
 
@@ -121,7 +126,7 @@ Cloudflare 补充说明：Deploy Button 主要用于 Workers；Pages 请使用 G
 
 本项目包含 NextAuth 与多条 API Route（收藏、历史、管理员、代理、搜索流等），因此不是纯静态站点。
 
-- 可运行平台：Vercel、Cloudflare Pages（Functions）、Netlify、Railway、Render、Docker。
+- 可运行平台：Vercel、Cloudflare Workers（OpenNext）、Netlify、Railway、Render、Docker。
 - 不建议直接部署到纯静态 CDN（如 GitHub Pages 或无函数能力的对象存储站点）。
 
 若必须使用纯静态托管，仅可构建精简版本：移除登录、云同步、管理员功能及全部服务端 API。

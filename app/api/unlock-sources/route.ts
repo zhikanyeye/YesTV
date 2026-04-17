@@ -5,7 +5,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'edge';
 
 const VIDEO_SOURCE_KEY = process.env.VIDEO_SOURCE_KEY || '1234';
 
@@ -26,3 +25,4 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ valid: false, message: 'Invalid request' }, { status: 400 });
     }
 }
+

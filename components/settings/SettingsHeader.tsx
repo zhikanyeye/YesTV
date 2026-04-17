@@ -1,19 +1,29 @@
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export function SettingsHeader() {
     const router = useRouter();
 
     return (
         <div>
-            <button
-                onClick={() => router.back()}
-                className="inline-flex items-center gap-2 text-[var(--accent-color)] hover:underline mb-4 cursor-pointer"
-            >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-                返回上一页
-            </button>
+            <div className="mb-4 flex items-center gap-4">
+                <button
+                    onClick={() => router.back()}
+                    className="inline-flex items-center gap-2 text-[var(--accent-color)] hover:underline cursor-pointer"
+                >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                    返回上一页
+                </button>
+                <Link href="/" className="inline-flex items-center gap-2 text-[var(--accent-color)] hover:underline">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 12L12 4l9 8" />
+                        <path d="M5 10v10h14V10" />
+                    </svg>
+                    返回首页
+                </Link>
+            </div>
             <div className="flex items-center gap-4">
                 <div className="w-12 h-12 flex items-center justify-center rounded-[var(--radius-2xl)] bg-[var(--glass-bg)] border border-[var(--glass-border)]">
                     <svg className="w-6 h-6 text-[var(--text-color)]" viewBox="0 -960 960 960" fill="currentColor">

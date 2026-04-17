@@ -43,6 +43,16 @@ export default function PremiumSettingsPage() {
                                 <p className="text-sm text-[var(--text-color-secondary)]">管理高级内容来源</p>
                             </div>
                         </div>
+                        <Link
+                            href="/"
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-[var(--radius-xl)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200"
+                        >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-8 9 8" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 10v10h14V10" />
+                            </svg>
+                            <span className="text-sm">首页</span>
+                        </Link>
                     </div>
                 </div>
 

@@ -9,7 +9,6 @@ import { searchVideos } from '@/lib/api/client';
 import { getSourceById } from '@/lib/api/video-sources';
 import { getSourceName } from '@/lib/utils/source-names';
 
-export const runtime = 'edge';
 
 // Timeout configuration
 const SEARCH_TIMEOUT_MS = 8000; // 8 second timeout for individual sources
@@ -167,5 +166,6 @@ export async function POST(request: NextRequest) {
     },
   });
 }
+
 
 
