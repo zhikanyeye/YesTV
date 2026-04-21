@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, isDbAvailable } from '@/lib/db';
 import { getRequestAuthContext } from '@/lib/auth/request-auth';
 import { isUserBanned } from '@/lib/user-management';
 
+const MAX_HISTORY_ITEMS = 50;
+
+function storageUnavailableResponse() {
+  return NextResponse.json({ error: 'History sync is unavailable' }, { status: 503 });
+}
 
 async function resolveTargetUserId(req: NextRequest): Promise<string | null> {
   const auth = await getRequestAuthContext(req);
@@ -25,6 +30,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  if (!isDbAvailable || !db) {
+    return storageUnavailableResponse();
+  }
+
   if (await isUserBanned(userId)) {
     return NextResponse.json({ error: 'Account is banned' }, { status: 403 });
   }
@@ -45,12 +54,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  if (!isDbAvailable || !db) {
+    return storageUnavailableResponse();
+  }
+
   if (await isUserBanned(userId)) {
     return NextResponse.json({ error: 'Account is banned' }, { status: 403 });
   }
 
   try {
     const history = await req.json();
+    if (!Array.isArray(history)) {
+      return NextResponse.json({ error: 'History payload must be an array' }, { status: 400 });
+    }
+
+    if (history.length > MAX_HISTORY_ITEMS) {
+      return NextResponse.json({ error: `History payload exceeds ${MAX_HISTORY_ITEMS} items` }, { status: 400 });
+    }
+
     await db.set(`history:${userId}`, history);
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -8,6 +8,8 @@ function userProfileKey(userId: string): string {
 }
 
 async function getUserIndex(): Promise<string[]> {
+  if (!db) return [];
+
   const value = await db.get(USERS_INDEX_KEY);
   return Array.isArray(value)
     ? value.filter((id): id is string => typeof id === 'string' && id.length > 0)
@@ -15,6 +17,7 @@ async function getUserIndex(): Promise<string[]> {
 }
 
 async function saveUserIndex(ids: string[]): Promise<void> {
+  if (!db) return;
   await db.set(USERS_INDEX_KEY, ids);
 }
 
@@ -33,6 +36,8 @@ async function removeUserFromIndex(userId: string): Promise<void> {
 }
 
 export async function getManagedUser(userId: string): Promise<ManagedUser | null> {
+  if (!db) return null;
+
   const value = await db.get(userProfileKey(userId));
   if (!value || typeof value !== 'object') return null;
 
@@ -73,6 +78,10 @@ export async function upsertManagedUser(input: {
     bannedAt: existing?.bannedAt ?? null,
   };
 
+  if (!db) {
+    return merged;
+  }
+
   await db.set(userProfileKey(input.id), merged);
   await ensureUserIndexed(input.id);
 
@@ -80,6 +89,8 @@ export async function upsertManagedUser(input: {
 }
 
 export async function listManagedUsers(): Promise<ManagedUser[]> {
+  if (!db) return [];
+
   const ids = await getUserIndex();
   if (ids.length === 0) return [];
 
@@ -96,6 +107,8 @@ export async function isUserBanned(userId: string): Promise<boolean> {
 }
 
 export async function banManagedUser(userId: string, reason?: string): Promise<ManagedUser | null> {
+  if (!db) return null;
+
   const user = await getManagedUser(userId);
   if (!user) return null;
 
@@ -111,6 +124,8 @@ export async function banManagedUser(userId: string, reason?: string): Promise<M
 }
 
 export async function unbanManagedUser(userId: string): Promise<ManagedUser | null> {
+  if (!db) return null;
+
   const user = await getManagedUser(userId);
   if (!user) return null;
 
@@ -126,6 +141,8 @@ export async function unbanManagedUser(userId: string): Promise<ManagedUser | nu
 }
 
 export async function deleteManagedUser(userId: string): Promise<void> {
+  if (!db) return;
+
   await db.del(userProfileKey(userId));
   await db.del(`favorites:${userId}`);
   await db.del(`history:${userId}`);

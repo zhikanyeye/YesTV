@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useMemo, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/Button';
 import { VideoPlayer } from '@/components/player/VideoPlayer';
 import { VideoMetadata } from '@/components/player/VideoMetadata';
 import { EpisodeList } from '@/components/player/EpisodeList';
@@ -14,8 +13,12 @@ import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
 import { FavoriteButton } from '@/components/favorites/FavoriteButton';
 import { PlayerNavbar } from '@/components/player/PlayerNavbar';
 import { settingsStore } from '@/lib/store/settings-store';
-import Image from 'next/image';
 import { ExternalPlayerLauncher } from '@/components/player/ExternalPlayerLauncher';
+
+interface PlayerEpisode {
+  url: string;
+  name?: string;
+}
 
 function PlayerContent() {
   const searchParams = useSearchParams();
@@ -28,6 +31,7 @@ function PlayerContent() {
   const title = searchParams.get('title');
   const episodeParam = searchParams.get('episode');
   const groupedSourcesParam = searchParams.get('groupedSources');
+  const hasRequiredParams = Boolean(videoId && source);
 
   // Parse grouped sources if available
   const groupedSources = useMemo<SourceInfo[]>(() => {
@@ -39,24 +43,10 @@ function PlayerContent() {
     }
   }, [groupedSourcesParam]);
 
-  // Track current source for switching
-  const [currentSourceId, setCurrentSourceId] = useState(source);
-
   // Track settings
   const [isReversed, setIsReversed] = useState(() =>
     typeof window !== 'undefined' ? settingsStore.getSettings().episodeReverseOrder : false
   );
-
-  // Sync with store changes if any (though usually it's one-way from UI to store)
-  useEffect(() => {
-    setIsReversed(settingsStore.getSettings().episodeReverseOrder);
-  }, []);
-
-  // Redirect if no video ID or source
-  if (!videoId || !source) {
-    router.push('/');
-    return null;
-  }
 
   const {
     videoData,
@@ -70,9 +60,15 @@ function PlayerContent() {
     fetchVideoDetails,
   } = useVideoPlayer(videoId, source, episodeParam, isReversed);
 
+  useEffect(() => {
+    if (!hasRequiredParams) {
+      router.replace('/');
+    }
+  }, [hasRequiredParams, router]);
+
   // Add initial history entry when video data is loaded
   useEffect(() => {
-    if (videoData && playUrl && videoId) {
+    if (videoData && playUrl && videoId && source) {
       // Map episodes to include index
       const mappedEpisodes = videoData.episodes?.map((ep, idx) => ({
         name: ep.name || `第${idx + 1}集`,
@@ -94,7 +90,7 @@ function PlayerContent() {
     }
   }, [videoData, playUrl, videoId, currentEpisode, source, title, addToHistory]);
 
-  const handleEpisodeClick = useCallback((episode: any, index: number) => {
+  const handleEpisodeClick = useCallback((episode: PlayerEpisode, index: number) => {
     setCurrentEpisode(index);
     setPlayUrl(episode.url);
     setVideoError('');
@@ -130,9 +126,13 @@ function PlayerContent() {
 
     const nextEpisode = episodes[nextIndex];
     if (nextEpisode) {
-      handleEpisodeClick(nextEpisode, nextIndex); // handleEpisodeClick relies on state setters, which are stable
+      handleEpisodeClick(nextEpisode, nextIndex);
     }
-  }, [videoData, currentEpisode, isReversed, handleEpisodeClick]); // handleEpisodeClick is not memoized, but uses stable hooks setters. wait, handleEpisodeClick is inline too!
+  }, [videoData, currentEpisode, isReversed, handleEpisodeClick]);
+
+  if (!hasRequiredParams) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[var(--bg-color)]">
@@ -213,7 +213,7 @@ function PlayerContent() {
                   groupedSources={groupedSources}
                   videoId={videoId}
                   videoTitle={title || videoData?.vod_name || ''}
-                  currentSource={currentSourceId || source || ''}
+                  currentSource={source || ''}
                   isPremium={isPremium}
                   onSourceChange={(newSource) => {
                     // Guard: ensure we have a valid video ID
@@ -239,10 +239,7 @@ function PlayerContent() {
                     if (isPremium) {
                       params.set('premium', '1');
                     }
-                    
-                    // Update current source ID
-                    setCurrentSourceId(newSource.source);
-                    
+
                     // Use router.push instead of reload to let React handle updates
                     router.push(`/player?${params.toString()}`);
                   }}
