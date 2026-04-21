@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo, memo } from 'react';
+import { useState, useRef, useCallback, useMemo, memo, useEffect } from 'react';
 import { VideoCard } from './VideoCard';
 import { Video } from '@/lib/types';
 
@@ -13,12 +13,7 @@ interface VideoGridProps {
 export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPremium = false }: VideoGridProps) {
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(24);
-  const gridRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
-
-  if (videos.length === 0) {
-    return null;
-  }
 
   // Callback ref for the load more trigger
   const loadMoreRef = useCallback((node: HTMLDivElement | null) => {
@@ -33,6 +28,10 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
 
       observerRef.current.observe(node);
     }
+  }, []);
+
+  useEffect(() => {
+    return () => observerRef.current?.disconnect();
   }, []);
 
   // Memoize the click handler
@@ -65,9 +64,9 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
     return groups;
   }, [videos]);
 
-  // Normal mode items with grouped sources
-  const videoItems = useMemo(() => {
-    return videos.map((video, index) => {
+  const visibleVideoItems = useMemo(() => {
+    return videos.slice(0, visibleCount).map((video, index) => {
+      const absoluteIndex = index;
       const params: Record<string, string> = {
         id: String(video.vod_id),
         source: video.source,
@@ -96,23 +95,26 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
 
       const videoUrl = `/player?${new URLSearchParams(params).toString()}`;
 
-      const cardId = `${video.vod_id}-${index}`;
+      const cardId = `${video.source}-${video.vod_id}-${absoluteIndex}`;
 
-      return { video, videoUrl, cardId };
+      return { video, videoUrl, cardId, absoluteIndex };
     });
-  }, [videos, videoGroups, isPremium]);
+  }, [videos, visibleCount, videoGroups, isPremium]);
 
-  const totalItems = videoItems.length;
+  const totalItems = videos.length;
+
+  if (videos.length === 0) {
+    return null;
+  }
 
   return (
     <>
       <div
-        ref={gridRef}
         className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-6 gap-3 md:gap-4 lg:gap-6 max-w-[1920px] mx-auto ${className}`}
         role="list"
         aria-label="视频搜索结果"
       >
-        {videoItems.slice(0, visibleCount).map(({ video, videoUrl, cardId }) => {
+        {visibleVideoItems.map(({ video, videoUrl, cardId, absoluteIndex }) => {
           const isActive = activeCardId === cardId;
           return (
             <VideoCard
@@ -122,6 +124,7 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
               cardId={cardId}
               isActive={isActive}
               onCardClick={handleCardClick}
+              imagePriority={absoluteIndex < 6}
               isPremium={isPremium}
             />
           );
@@ -139,4 +142,3 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
     </>
   );
 });
-
