@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isDbAvailable } from '@/lib/db';
 import { getRequestAuthContext } from '@/lib/auth/request-auth';
 import {
   banManagedUser,
@@ -14,10 +15,18 @@ function forbiddenResponse() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 }
 
+function storageUnavailableResponse() {
+  return NextResponse.json({ error: 'User storage is unavailable' }, { status: 503 });
+}
+
 export async function GET(req: NextRequest) {
   const auth = await getRequestAuthContext(req);
   if (!auth.userId || !auth.isAdmin) {
     return forbiddenResponse();
+  }
+
+  if (!isDbAvailable) {
+    return storageUnavailableResponse();
   }
 
   const users = await listManagedUsers();
@@ -28,6 +37,10 @@ export async function PATCH(req: NextRequest) {
   const auth = await getRequestAuthContext(req);
   if (!auth.userId || !auth.isAdmin) {
     return forbiddenResponse();
+  }
+
+  if (!isDbAvailable) {
+    return storageUnavailableResponse();
   }
 
   try {

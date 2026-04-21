@@ -8,7 +8,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { VideoHistoryItem, Episode } from '@/lib/types';
 import { clearSegmentsForUrl, clearAllCache } from '@/lib/utils/cacheManager';
 import { useSession } from 'next-auth/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useCloudSyncStatusStore } from '@/lib/store/cloud-sync-status';
 
 const MAX_HISTORY_ITEMS = 50;
 
@@ -39,6 +40,25 @@ interface HistoryStore extends HistoryState, HistoryActions { }
 
 function generateShowIdentifier(title: string, source: string, videoId: string | number): string {
   return `${source}:${videoId}:${title.toLowerCase().trim()}`;
+}
+
+let remoteHistoryUserId: string | null = null;
+let historyConsumerCount = 0;
+const historyAvailabilityListeners = new Set<(available: boolean, userId: string | null) => void>();
+
+function setRemoteHistoryUserId(userId: string | null) {
+  remoteHistoryUserId = userId;
+}
+
+function notifyHistoryAvailability(available: boolean, history?: VideoHistoryItem[]) {
+  const activeUserId = remoteHistoryUserId;
+
+  if (!available && history) {
+    useLocalHistoryStore.getState().importHistory(history);
+  }
+
+  useCloudSyncStatusStore.getState().setHistoryStatus(available ? 'available' : 'fallback');
+  historyAvailabilityListeners.forEach((listener) => listener(available, activeUserId));
 }
 
 const useLocalHistoryStore = create<HistoryStore>()(
@@ -132,16 +152,26 @@ const useRemoteHistoryStore = create<HistoryStore>((set, get) => ({
 }));
 
 async function syncHistory(history: VideoHistoryItem[]) {
-    const session = (useSession as any)();
-    if (!session.data?.user?.id) return;
+    if (!remoteHistoryUserId) return false;
+
     try {
-        await fetch(`/api/history?userId=${session.data.user.id}`, {
+        const response = await fetch(`/api/history?userId=${remoteHistoryUserId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(history),
         });
+
+        if (!response.ok) {
+            notifyHistoryAvailability(false, history);
+            return false;
+        }
+
+        notifyHistoryAvailability(true);
+        return true;
     } catch (error) {
         console.error('Failed to sync history:', error);
+        notifyHistoryAvailability(false, history);
+        return false;
     }
 }
 
@@ -149,23 +179,61 @@ export function useHistory() {
     const { data: session } = useSession();
     const localStore = useLocalHistoryStore();
     const remoteStore = useRemoteHistoryStore();
+    const [remoteState, setRemoteState] = useState<{ userId: string | null; available: boolean }>({
+        userId: null,
+        available: false,
+    });
 
     useEffect(() => {
+        const userId = session?.user?.id ?? null;
+
+        if (!userId) {
+            setRemoteHistoryUserId(null);
+            useCloudSyncStatusStore.getState().setHistoryStatus('unknown');
+            return;
+        }
+
+        historyConsumerCount += 1;
+        setRemoteHistoryUserId(userId);
+        const handleAvailabilityChange = (available: boolean, updatedUserId: string | null) => {
+            setRemoteState({ userId: updatedUserId, available });
+        };
+        historyAvailabilityListeners.add(handleAvailabilityChange);
+
+        let cancelled = false;
+
         async function fetchData() {
-            if (session?.user?.id) {
-                try {
-                    const response = await fetch(`/api/history?userId=${session.user.id}`);
-                    if (response.ok) {
-                        const history = await response.json();
-                        useRemoteHistoryStore.setState({ viewingHistory: history, isHydrated: true });
-                    }
-                } catch (error) {
-                    console.error('Failed to fetch remote history:', error);
+            try {
+                const response = await fetch(`/api/history?userId=${userId}`);
+                if (!response.ok) {
+                    if (!cancelled) notifyHistoryAvailability(false);
+                    return;
                 }
+
+                const history = await response.json();
+                useRemoteHistoryStore.setState({ viewingHistory: history, isHydrated: true });
+                if (!cancelled) {
+                    notifyHistoryAvailability(true);
+                }
+            } catch (error) {
+                console.error('Failed to fetch remote history:', error);
+                if (!cancelled) notifyHistoryAvailability(false);
             }
         }
-        fetchData();
-    }, [session, remoteStore]);
 
-    return session ? remoteStore : localStore;
+        fetchData();
+
+        return () => {
+            cancelled = true;
+            historyAvailabilityListeners.delete(handleAvailabilityChange);
+            historyConsumerCount = Math.max(0, historyConsumerCount - 1);
+            if (historyConsumerCount === 0) {
+                setRemoteHistoryUserId(null);
+            }
+        };
+    }, [session?.user?.id]);
+
+    return session?.user?.id && remoteState.userId === session.user.id && remoteState.available
+        ? remoteStore
+        : localStore;
 }

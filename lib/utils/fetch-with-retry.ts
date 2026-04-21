@@ -1,12 +1,9 @@
-import { NextRequest } from 'next/server';
-
 interface FetchWithRetryOptions {
     url: string;
-    request: NextRequest;
     headers?: Record<string, string>;
 }
 
-export async function fetchWithRetry({ url, request, headers = {} }: FetchWithRetryOptions): Promise<Response> {
+export async function fetchWithRetry({ url, headers = {} }: FetchWithRetryOptions): Promise<Response> {
     // User-Agent rotation for better compatibility
     const userAgents = [
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -17,10 +14,7 @@ export async function fetchWithRetry({ url, request, headers = {} }: FetchWithRe
 
     // Smart Referer: use video domain instead of site domain to avoid suspicion
     const videoUrl = new URL(url);
-    const referer = request.nextUrl.searchParams.get('referer') || `${videoUrl.protocol}//${videoUrl.hostname}`;
-
-    // Optional IP forwarding (default: Beijing IP)
-    const forwardedIP = request.nextUrl.searchParams.get('ip') || '202.108.22.5';
+    const referer = `${videoUrl.protocol}//${videoUrl.hostname}`;
 
     const MAX_RETRIES = 5;
     const TIMEOUT_MS = 30000; // 30 seconds
@@ -47,8 +41,6 @@ export async function fetchWithRetry({ url, request, headers = {} }: FetchWithRe
                     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
                     'Accept-Encoding': 'gzip, deflate, br',
                     'Connection': 'keep-alive',
-                    'X-Forwarded-For': forwardedIP,
-                    'Client-IP': forwardedIP,
                     'Referer': referer,
                     'Origin': `${videoUrl.protocol}//${videoUrl.hostname}`,
                     'Sec-Fetch-Dest': 'empty',

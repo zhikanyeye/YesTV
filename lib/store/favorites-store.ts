@@ -7,7 +7,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { FavoriteItem } from '@/lib/types';
 import { useSession } from 'next-auth/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useCloudSyncStatusStore } from '@/lib/store/cloud-sync-status';
 
 const MAX_FAVORITES = 100;
 
@@ -30,6 +31,25 @@ interface FavoritesStore extends FavoritesState, FavoritesActions { }
 
 function generateFavoriteId(videoId: string | number, source: string): string {
     return `${source}:${videoId}`;
+}
+
+let remoteFavoritesUserId: string | null = null;
+let favoritesConsumerCount = 0;
+const favoritesAvailabilityListeners = new Set<(available: boolean, userId: string | null) => void>();
+
+function setRemoteFavoritesUserId(userId: string | null) {
+    remoteFavoritesUserId = userId;
+}
+
+function notifyFavoritesAvailability(available: boolean, favorites?: FavoriteItem[]) {
+    const activeUserId = remoteFavoritesUserId;
+
+    if (!available && favorites) {
+        useLocalFavoritesStore.getState().importFavorites(favorites);
+    }
+
+    useCloudSyncStatusStore.getState().setFavoritesStatus(available ? 'available' : 'fallback');
+    favoritesAvailabilityListeners.forEach((listener) => listener(available, activeUserId));
 }
 
 // This is the store for unauthenticated users, using localStorage
@@ -134,16 +154,26 @@ const useRemoteFavoritesStore = create<FavoritesStore>((set, get) => ({
 }));
 
 async function syncFavorites(favorites: FavoriteItem[]) {
-    const session = (useSession as any)();
-    if (!session.data?.user?.id) return;
+    if (!remoteFavoritesUserId) return false;
+
     try {
-        await fetch(`/api/favorites?userId=${session.data.user.id}`, {
+        const response = await fetch(`/api/favorites?userId=${remoteFavoritesUserId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(favorites),
         });
+
+        if (!response.ok) {
+            notifyFavoritesAvailability(false, favorites);
+            return false;
+        }
+
+        notifyFavoritesAvailability(true);
+        return true;
     } catch (error) {
         console.error('Failed to sync favorites:', error);
+        notifyFavoritesAvailability(false, favorites);
+        return false;
     }
 }
 
@@ -151,24 +181,61 @@ export function useFavorites() {
     const { data: session } = useSession();
     const localStore = useLocalFavoritesStore();
     const remoteStore = useRemoteFavoritesStore();
+    const [remoteState, setRemoteState] = useState<{ userId: string | null; available: boolean }>({
+        userId: null,
+        available: false,
+    });
 
     useEffect(() => {
+        const userId = session?.user?.id ?? null;
+
+        if (!userId) {
+            setRemoteFavoritesUserId(null);
+            useCloudSyncStatusStore.getState().setFavoritesStatus('unknown');
+            return;
+        }
+
+        favoritesConsumerCount += 1;
+        setRemoteFavoritesUserId(userId);
+        const handleAvailabilityChange = (available: boolean, updatedUserId: string | null) => {
+            setRemoteState({ userId: updatedUserId, available });
+        };
+        favoritesAvailabilityListeners.add(handleAvailabilityChange);
+
+        let cancelled = false;
+
         async function fetchData() {
-            if (session?.user?.id) {
-                try {
-                    const response = await fetch(`/api/favorites?userId=${session.user.id}`);
-                    if (response.ok) {
-                        const favorites = await response.json();
-                        useRemoteFavoritesStore.setState({ favorites, isHydrated: true });
-                    }
-                } catch (error) {
-                    console.error('Failed to fetch remote favorites:', error);
+            try {
+                const response = await fetch(`/api/favorites?userId=${userId}`);
+                if (!response.ok) {
+                    if (!cancelled) notifyFavoritesAvailability(false);
+                    return;
                 }
+
+                const favorites = await response.json();
+                useRemoteFavoritesStore.setState({ favorites, isHydrated: true });
+                if (!cancelled) {
+                    notifyFavoritesAvailability(true);
+                }
+            } catch (error) {
+                console.error('Failed to fetch remote favorites:', error);
+                if (!cancelled) notifyFavoritesAvailability(false);
             }
         }
+
         fetchData();
-    }, [session, remoteStore]);
 
-    return session ? remoteStore : localStore;
+        return () => {
+            cancelled = true;
+            favoritesAvailabilityListeners.delete(handleAvailabilityChange);
+            favoritesConsumerCount = Math.max(0, favoritesConsumerCount - 1);
+            if (favoritesConsumerCount === 0) {
+                setRemoteFavoritesUserId(null);
+            }
+        };
+    }, [session?.user?.id]);
+
+    return session?.user?.id && remoteState.userId === session.user.id && remoteState.available
+        ? remoteStore
+        : localStore;
 }
-

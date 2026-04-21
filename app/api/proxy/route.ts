@@ -7,24 +7,98 @@ import { fetchWithRetry } from '@/lib/utils/fetch-with-retry';
 // Note: This is not supported in Cloudflare Workers/Edge Runtime.
 // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-export async function GET(request: NextRequest) {
-    const url = request.nextUrl.searchParams.get('url');
+const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
-    if (!url) {
+function normalizeHostname(hostname: string): string {
+    return hostname.replace(/^\[/, '').replace(/\]$/, '').toLowerCase();
+}
+
+function isIpv4Address(hostname: string): boolean {
+    return /^\d{1,3}(\.\d{1,3}){3}$/.test(normalizeHostname(hostname));
+}
+
+function isPrivateIpv4(hostname: string): boolean {
+    const normalized = normalizeHostname(hostname);
+    if (!isIpv4Address(normalized)) return false;
+
+    const octets = normalized.split('.').map(Number);
+    const [first, second] = octets;
+
+    if (octets.some((value) => Number.isNaN(value) || value < 0 || value > 255)) {
+        return true;
+    }
+
+    return first === 0 ||
+        first === 10 ||
+        first === 127 ||
+        (first === 169 && second === 254) ||
+        (first === 172 && second >= 16 && second <= 31) ||
+        (first === 192 && second === 168);
+}
+
+function isBlockedIpv6(hostname: string): boolean {
+    const normalized = normalizeHostname(hostname);
+    return normalized === '::1' ||
+        normalized.startsWith('fe80:') ||
+        normalized.startsWith('fc') ||
+        normalized.startsWith('fd');
+}
+
+function isBlockedHostname(hostname: string): boolean {
+    const normalized = normalizeHostname(hostname);
+    return normalized === 'localhost' ||
+        normalized.endsWith('.localhost') ||
+        normalized.endsWith('.local');
+}
+
+function isProxyTargetAllowed(target: URL): boolean {
+    if (!ALLOWED_PROTOCOLS.has(target.protocol)) {
+        return false;
+    }
+
+    if (target.username || target.password) {
+        return false;
+    }
+
+    if (isBlockedHostname(target.hostname) || isPrivateIpv4(target.hostname) || isBlockedIpv6(target.hostname)) {
+        return false;
+    }
+
+    return true;
+}
+
+export async function GET(request: NextRequest) {
+    const rawUrl = request.nextUrl.searchParams.get('url');
+
+    if (!rawUrl) {
         return new NextResponse('Missing URL parameter', { status: 400 });
     }
+
+    let targetUrl: URL;
+
+    try {
+        targetUrl = new URL(rawUrl);
+    } catch {
+        return new NextResponse('Invalid URL parameter', { status: 400 });
+    }
+
+    if (!isProxyTargetAllowed(targetUrl)) {
+        return new NextResponse('Blocked proxy target', { status: 403 });
+    }
+
+    const url = targetUrl.toString();
 
     try {
         // Extract headers to forward (only essential ones)
         const requestHeaders: Record<string, string> = {};
-        const forwardHeaders = ['cookie', 'range'];
+        const forwardHeaders = ['range'];
 
         forwardHeaders.forEach(key => {
             const value = request.headers.get(key);
             if (value) requestHeaders[key] = value;
         });
 
-        const response = await fetchWithRetry({ url, request, headers: requestHeaders });
+        const response = await fetchWithRetry({ url, headers: requestHeaders });
 
         // If upstream returned an error, pass it through with CORS headers
         if (!response.ok) {
@@ -116,7 +190,7 @@ export async function GET(request: NextRequest) {
     }
 }
 
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
     return new NextResponse(null, {
         status: 204,
         headers: {
