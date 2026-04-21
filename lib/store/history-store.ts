@@ -8,7 +8,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { VideoHistoryItem, Episode } from '@/lib/types';
 import { clearSegmentsForUrl, clearAllCache } from '@/lib/utils/cacheManager';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useCloudSyncStatusStore } from '@/lib/store/cloud-sync-status';
 
 const MAX_HISTORY_ITEMS = 50;
@@ -43,22 +43,19 @@ function generateShowIdentifier(title: string, source: string, videoId: string |
 }
 
 let remoteHistoryUserId: string | null = null;
-let historyConsumerCount = 0;
-const historyAvailabilityListeners = new Set<(available: boolean, userId: string | null) => void>();
+let historyInitializedUserId: string | null = null;
+let historyInitPromise: Promise<void> | null = null;
 
 function setRemoteHistoryUserId(userId: string | null) {
   remoteHistoryUserId = userId;
 }
 
 function notifyHistoryAvailability(available: boolean, history?: VideoHistoryItem[]) {
-  const activeUserId = remoteHistoryUserId;
-
   if (!available && history) {
     useLocalHistoryStore.getState().importHistory(history);
   }
 
   useCloudSyncStatusStore.getState().setHistoryStatus(available ? 'available' : 'fallback');
-  historyAvailabilityListeners.forEach((listener) => listener(available, activeUserId));
 }
 
 const useLocalHistoryStore = create<HistoryStore>()(
@@ -175,65 +172,71 @@ async function syncHistory(history: VideoHistoryItem[]) {
     }
 }
 
-export function useHistory() {
+function resetHistorySyncState() {
+    setRemoteHistoryUserId(null);
+    historyInitializedUserId = null;
+    historyInitPromise = null;
+    useRemoteHistoryStore.setState({ viewingHistory: [], isHydrated: true });
+    useCloudSyncStatusStore.getState().setHistoryStatus('unknown');
+}
+
+async function initializeRemoteHistory(userId: string) {
+    try {
+        const response = await fetch(`/api/history?userId=${userId}`);
+        if (remoteHistoryUserId !== userId) return;
+
+        if (!response.ok) {
+            notifyHistoryAvailability(false);
+            historyInitializedUserId = userId;
+            return;
+        }
+
+        const history = await response.json();
+        if (remoteHistoryUserId !== userId) return;
+
+        useRemoteHistoryStore.setState({ viewingHistory: history, isHydrated: true });
+        notifyHistoryAvailability(true);
+        historyInitializedUserId = userId;
+    } catch (error) {
+        if (remoteHistoryUserId !== userId) return;
+        console.error('Failed to fetch remote history:', error);
+        notifyHistoryAvailability(false);
+        historyInitializedUserId = userId;
+    } finally {
+        if (remoteHistoryUserId === userId) {
+            historyInitPromise = null;
+        }
+    }
+}
+
+export function useInitializeHistorySync() {
     const { data: session } = useSession();
-    const localStore = useLocalHistoryStore();
-    const remoteStore = useRemoteHistoryStore();
-    const [remoteState, setRemoteState] = useState<{ userId: string | null; available: boolean }>({
-        userId: null,
-        available: false,
-    });
 
     useEffect(() => {
         const userId = session?.user?.id ?? null;
 
         if (!userId) {
-            setRemoteHistoryUserId(null);
-            useCloudSyncStatusStore.getState().setHistoryStatus('unknown');
+            resetHistorySyncState();
             return;
         }
 
-        historyConsumerCount += 1;
         setRemoteHistoryUserId(userId);
-        const handleAvailabilityChange = (available: boolean, updatedUserId: string | null) => {
-            setRemoteState({ userId: updatedUserId, available });
-        };
-        historyAvailabilityListeners.add(handleAvailabilityChange);
-
-        let cancelled = false;
-
-        async function fetchData() {
-            try {
-                const response = await fetch(`/api/history?userId=${userId}`);
-                if (!response.ok) {
-                    if (!cancelled) notifyHistoryAvailability(false);
-                    return;
-                }
-
-                const history = await response.json();
-                useRemoteHistoryStore.setState({ viewingHistory: history, isHydrated: true });
-                if (!cancelled) {
-                    notifyHistoryAvailability(true);
-                }
-            } catch (error) {
-                console.error('Failed to fetch remote history:', error);
-                if (!cancelled) notifyHistoryAvailability(false);
-            }
+        if (historyInitializedUserId === userId || historyInitPromise) {
+            return;
         }
 
-        fetchData();
-
-        return () => {
-            cancelled = true;
-            historyAvailabilityListeners.delete(handleAvailabilityChange);
-            historyConsumerCount = Math.max(0, historyConsumerCount - 1);
-            if (historyConsumerCount === 0) {
-                setRemoteHistoryUserId(null);
-            }
-        };
+        useCloudSyncStatusStore.getState().setHistoryStatus('unknown');
+        historyInitPromise = initializeRemoteHistory(userId);
     }, [session?.user?.id]);
+}
 
-    return session?.user?.id && remoteState.userId === session.user.id && remoteState.available
+export function useHistory() {
+    const { data: session } = useSession();
+    const localStore = useLocalHistoryStore();
+    const remoteStore = useRemoteHistoryStore();
+    const historyStatus = useCloudSyncStatusStore((state) => state.history);
+
+    return session?.user?.id && historyStatus === 'available'
         ? remoteStore
         : localStore;
 }

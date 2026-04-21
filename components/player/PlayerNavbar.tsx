@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/Button';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { Icons } from '@/components/ui/Icon';
 import { siteConfig } from '@/lib/config/site-config';
+import { useSafeBackNavigation } from '@/lib/hooks/useSafeBackNavigation';
 
 export function PlayerNavbar({ isPremium }: { isPremium?: boolean }) {
     const router = useRouter();
+    const handleBack = useSafeBackNavigation(isPremium ? '/premium' : '/');
 
     return (
         <nav className="sticky top-0 z-50 pt-[calc(env(safe-area-inset-top)+1rem)] pb-2 px-4 layer-gpu">
@@ -29,7 +31,7 @@ export function PlayerNavbar({ isPremium }: { isPremium?: boolean }) {
                         </button>
                         <Button
                             variant="secondary"
-                            onClick={() => router.back()}
+                            onClick={handleBack}
                             className="flex items-center gap-2"
                         >
                             <Icons.ChevronLeft size={20} />

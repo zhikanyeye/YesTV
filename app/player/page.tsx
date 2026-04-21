@@ -14,6 +14,7 @@ import { FavoriteButton } from '@/components/favorites/FavoriteButton';
 import { PlayerNavbar } from '@/components/player/PlayerNavbar';
 import { settingsStore } from '@/lib/store/settings-store';
 import { ExternalPlayerLauncher } from '@/components/player/ExternalPlayerLauncher';
+import { useSafeBackNavigation } from '@/lib/hooks/useSafeBackNavigation';
 
 interface PlayerEpisode {
   url: string;
@@ -24,6 +25,7 @@ function PlayerContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const isPremium = searchParams.get('premium') === '1';
+  const handleBack = useSafeBackNavigation(isPremium ? '/premium' : '/');
   const { addToHistory } = useHistory();
 
   const videoId = searchParams.get('id');
@@ -148,7 +150,7 @@ function PlayerContent() {
         ) : videoError && !videoData ? (
           <PlayerError
             error={videoError}
-            onBack={() => router.back()}
+            onBack={handleBack}
             onRetry={fetchVideoDetails}
           />
         ) : (
@@ -160,7 +162,7 @@ function PlayerContent() {
                   playUrl={playUrl}
                   videoId={videoId || undefined}
                   currentEpisode={currentEpisode}
-                  onBack={() => router.back()}
+                  onBack={handleBack}
                   totalEpisodes={videoData?.episodes?.length || 1}
                   onNextEpisode={handleNextEpisode}
                   isReversed={isReversed}
