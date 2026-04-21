@@ -130,7 +130,7 @@ function PlayerContent() {
     }
   }, [videoData, currentEpisode, isReversed, handleEpisodeClick]);
 
-  if (!hasRequiredParams) {
+  if (!videoId || !source) {
     return null;
   }
 
