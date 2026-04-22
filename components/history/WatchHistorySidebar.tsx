@@ -6,7 +6,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
 import { useHistory } from '@/lib/store/history-store';
 import { Icons } from '@/components/ui/Icon';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -15,7 +14,7 @@ import { HistoryList } from './HistoryList';
 import { HistoryFooter } from './HistoryFooter';
 import { trapFocus } from '@/lib/accessibility/focus-management';
 
-export function WatchHistorySidebar({ isPremium = false }: { isPremium?: boolean }) {
+export function WatchHistorySidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
@@ -100,45 +99,49 @@ export function WatchHistorySidebar({ isPremium = false }: { isPremium?: boolean
       )}
 
       {/* Sidebar */}
-      <aside
-        ref={sidebarRef}
-        role="complementary"
-        aria-labelledby="history-sidebar-title"
-        aria-hidden={!isOpen}
-        style={{
-          transform: isOpen ? 'translate3d(0, 0, 0)' : 'translate3d(100%, 0, 0)',
-          willChange: isOpen ? 'transform' : 'auto'
-        }}
-        className={`fixed top-0 right-0 bottom-0 w-[92%] sm:w-[85%] max-w-[420px] z-[2000] bg-[var(--glass-bg)] backdrop-blur-[8px] saturate-[120%] border-l border-[var(--glass-border)] rounded-tl-[var(--radius-2xl)] rounded-bl-[var(--radius-2xl)] p-6 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-transform duration-250 ease-out`}
-      >
-        <HistoryHeader onClose={() => setIsOpen(false)} />
+      {isOpen && (
+        <aside
+          ref={sidebarRef}
+          role="complementary"
+          aria-labelledby="history-sidebar-title"
+          aria-hidden={!isOpen}
+          style={{
+            transform: 'translate3d(0, 0, 0)',
+            willChange: 'transform'
+          }}
+          className="fixed top-0 right-0 bottom-0 w-[92%] sm:w-[85%] max-w-[420px] z-[2000] bg-[var(--glass-bg)] backdrop-blur-[8px] saturate-[120%] border-l border-[var(--glass-border)] rounded-tl-[var(--radius-2xl)] rounded-bl-[var(--radius-2xl)] p-6 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.2)] animate-[slideInFromRight_0.25s_ease-out]"
+        >
+          <HistoryHeader onClose={() => setIsOpen(false)} />
 
-        <HistoryList
-          history={viewingHistory}
-          onRemove={handleDeleteItem}
-        />
+          <HistoryList
+            history={viewingHistory}
+            onRemove={handleDeleteItem}
+          />
 
-        <HistoryFooter
-          hasHistory={viewingHistory.length > 0}
-          onClearAll={handleClearAll}
-        />
-      </aside>
+          <HistoryFooter
+            hasHistory={viewingHistory.length > 0}
+            onClearAll={handleClearAll}
+          />
+        </aside>
+      )}
 
       {/* Confirm Dialog */}
-      <ConfirmDialog
-        isOpen={deleteConfirm.isOpen}
-        title={deleteConfirm.isClearAll ? '清空历史记录' : '删除历史记录'}
-        message={
-          deleteConfirm.isClearAll
-            ? '确定要清空所有观看历史吗？此操作无法撤销。'
-            : '确定要删除这条历史记录吗？'
-        }
-        onConfirm={confirmDelete}
-        onCancel={cancelDelete}
-        confirmText="删除"
-        cancelText="取消"
-        variant="danger"
-      />
+      {deleteConfirm.isOpen && (
+        <ConfirmDialog
+          isOpen={deleteConfirm.isOpen}
+          title={deleteConfirm.isClearAll ? '清空历史记录' : '删除历史记录'}
+          message={
+            deleteConfirm.isClearAll
+              ? '确定要清空所有观看历史吗？此操作无法撤销。'
+              : '确定要删除这条历史记录吗？'
+          }
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+          confirmText="删除"
+          cancelText="取消"
+          variant="danger"
+        />
+      )}
     </>
   );
 }

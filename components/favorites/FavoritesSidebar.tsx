@@ -6,9 +6,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
 import { useFavorites } from '@/lib/store/favorites-store';
-import { WatchHistorySidebar } from '@/components/history/WatchHistorySidebar';
 import { Icons } from '@/components/ui/Icon';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { FavoritesHeader } from './FavoritesHeader';
@@ -101,49 +99,50 @@ export function FavoritesSidebar({ isPremium = false }: { isPremium?: boolean })
             )}
 
             {/* Sidebar - Left side */}
-            <aside
-                ref={sidebarRef}
-                role="complementary"
-                aria-labelledby="favorites-sidebar-title"
-                aria-hidden={!isOpen}
-                style={{
-                    transform: isOpen ? 'translate3d(0, 0, 0)' : 'translate3d(-100%, 0, 0)',
-                    willChange: isOpen ? 'transform' : 'auto'
-                }}
-                className={`fixed top-0 left-0 bottom-0 w-[92%] sm:w-[85%] max-w-[420px] z-[2000] bg-[var(--glass-bg)] backdrop-blur-[8px] saturate-[120%] border-r border-[var(--glass-border)] rounded-tr-[var(--radius-2xl)] rounded-br-[var(--radius-2xl)] p-6 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-transform duration-250 ease-out`}
-            >
-                <FavoritesHeader onClose={() => setIsOpen(false)} />
+            {isOpen && (
+                <aside
+                    ref={sidebarRef}
+                    role="complementary"
+                    aria-labelledby="favorites-sidebar-title"
+                    aria-hidden={!isOpen}
+                    style={{
+                        transform: 'translate3d(0, 0, 0)',
+                        willChange: 'transform'
+                    }}
+                    className="fixed top-0 left-0 bottom-0 w-[92%] sm:w-[85%] max-w-[420px] z-[2000] bg-[var(--glass-bg)] backdrop-blur-[8px] saturate-[120%] border-r border-[var(--glass-border)] rounded-tr-[var(--radius-2xl)] rounded-br-[var(--radius-2xl)] p-6 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.2)] animate-[slideInFromLeft_0.25s_ease-out]"
+                >
+                    <FavoritesHeader onClose={() => setIsOpen(false)} />
 
-                <FavoritesList
-                    favorites={favorites}
-                    onRemove={handleDeleteItem}
-                    isPremium={isPremium}
-                />
+                    <FavoritesList
+                        favorites={favorites}
+                        onRemove={handleDeleteItem}
+                        isPremium={isPremium}
+                    />
 
-                <FavoritesFooter
-                    hasFavorites={favorites.length > 0}
-                    onClearAll={handleClearAll}
-                />
-            </aside>
-
-            {/* Watch History Sidebar - Right side */}
-            <WatchHistorySidebar isPremium={isPremium} />
+                    <FavoritesFooter
+                        hasFavorites={favorites.length > 0}
+                        onClearAll={handleClearAll}
+                    />
+                </aside>
+            )}
 
             {/* Confirm Dialog */}
-            <ConfirmDialog
-                isOpen={deleteConfirm.isOpen}
-                title={deleteConfirm.isClearAll ? '清空收藏夹' : '取消收藏'}
-                message={
-                    deleteConfirm.isClearAll
-                        ? '确定要清空所有收藏吗？此操作无法撤销。'
-                        : '确定要取消收藏这个视频吗？'
-                }
-                onConfirm={confirmDelete}
-                onCancel={cancelDelete}
-                confirmText="确定"
-                cancelText="取消"
-                variant="danger"
-            />
+            {deleteConfirm.isOpen && (
+                <ConfirmDialog
+                    isOpen={deleteConfirm.isOpen}
+                    title={deleteConfirm.isClearAll ? '清空收藏夹' : '取消收藏'}
+                    message={
+                        deleteConfirm.isClearAll
+                            ? '确定要清空所有收藏吗？此操作无法撤销。'
+                            : '确定要取消收藏这个视频吗？'
+                    }
+                    onConfirm={confirmDelete}
+                    onCancel={cancelDelete}
+                    confirmText="确定"
+                    cancelText="取消"
+                    variant="danger"
+                />
+            )}
         </>
     );
 }
