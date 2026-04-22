@@ -1,4 +1,4 @@
-
+import { useDeferredValue } from 'react';
 import { ResultsHeader } from '@/components/search/ResultsHeader';
 import { SourceBadges } from '@/components/search/SourceBadges';
 import { TypeBadges } from '@/components/search/TypeBadges';
@@ -15,12 +15,15 @@ interface SearchResultsProps {
 }
 
 export function SearchResults({ results, availableSources, loading, isPremium = false }: SearchResultsProps) {
+    const deferredResults = useDeferredValue(results);
+    const deferredSources = useDeferredValue(availableSources);
+
     // Source badges hook - filters by video source
     const {
         selectedSources,
         filteredVideos: sourceFilteredVideos,
         toggleSource,
-    } = useSourceBadges(results, availableSources);
+    } = useSourceBadges(deferredResults, deferredSources);
 
     // Type badges hook - auto-collects and filters by type_name
     // Apply on source-filtered results for combined filtering
@@ -42,9 +45,9 @@ export function SearchResults({ results, availableSources, loading, isPremium = 
             />
 
             {/* Source Badges - Clickable video source filtering */}
-            {availableSources.length > 0 && (
+            {deferredSources.length > 0 && (
                 <SourceBadges
-                    sources={availableSources}
+                    sources={deferredSources}
                     selectedSources={selectedSources}
                     onToggleSource={toggleSource}
                     className="mb-6"
