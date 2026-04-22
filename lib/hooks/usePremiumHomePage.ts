@@ -10,7 +10,7 @@ export function usePremiumHomePage() {
     useSubscriptionSync();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { loadFromCache, saveToCache } = useSearchCache();
+    const { loadFromCache, saveToCache } = useSearchCache('premium');
     const hasLoadedCache = useRef(false);
     const hasSearchedWithSourcesRef = useRef(false);
     const enabledPremiumSourcesRef = useRef<VideoSource[]>([]);

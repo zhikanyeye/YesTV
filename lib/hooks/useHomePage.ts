@@ -9,7 +9,7 @@ export function useHomePage() {
     useSubscriptionSync();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { loadFromCache, saveToCache } = useSearchCache();
+    const { loadFromCache, saveToCache } = useSearchCache('normal');
     const hasLoadedCache = useRef(false);
     const hasSearchedWithSourcesRef = useRef(false);
     const initialEnabledSources = settingsStore.getSettings().sources.filter(s => s.enabled);
