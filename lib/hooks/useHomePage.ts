@@ -12,12 +12,14 @@ export function useHomePage() {
     const { loadFromCache, saveToCache } = useSearchCache();
     const hasLoadedCache = useRef(false);
     const hasSearchedWithSourcesRef = useRef(false);
+    const initialEnabledSources = settingsStore.getSettings().sources.filter(s => s.enabled);
+    const enabledSourcesRef = useRef(initialEnabledSources);
+    const initialQuery = searchParams.get('q') || '';
 
-    const [query, setQuery] = useState('');
-    const [hasSearched, setHasSearched] = useState(false);
+    const [query, setQuery] = useState(initialQuery);
+    const [hasSearched, setHasSearched] = useState(() => initialQuery.length > 0);
     const [currentSortBy, setCurrentSortBy] = useState<SortOption>('default');
-    const [sourcesLoading, setSourcesLoading] = useState(true);
-    const [sourcesLoaded, setSourcesLoaded] = useState(false);
+    const [sourcesLoading, setSourcesLoading] = useState(() => initialEnabledSources.length === 0);
 
     const onUrlUpdate = useCallback((q: string) => {
         router.replace(`/?q=${encodeURIComponent(q)}`, { scroll: false });
@@ -44,7 +46,9 @@ export function useHomePage() {
         if (!searchQuery.trim()) return false;
 
         const settings = settingsStore.getSettings();
-        const enabledSources = settings.sources.filter(s => s.enabled);
+        const enabledSources = enabledSourcesRef.current.length > 0
+            ? enabledSourcesRef.current
+            : settings.sources.filter(s => s.enabled);
 
         if (enabledSources.length === 0) {
             return false;
@@ -68,12 +72,10 @@ export function useHomePage() {
             const settings = settingsStore.getSettings();
             const enabledSources = settings.sources.filter(s => s.enabled);
             const hasSources = enabledSources.length > 0;
+            enabledSourcesRef.current = enabledSources;
 
             // Update loading status
-            if (hasSources && sourcesLoading) {
-                setSourcesLoading(false);
-                setSourcesLoaded(true);
-            }
+            setSourcesLoading(prev => hasSources ? false : prev);
 
             // Update sort preference
             if (settings.sortBy !== currentSortBy) {
@@ -86,7 +88,6 @@ export function useHomePage() {
             // If we have a query, and we haven't searched with sources yet,
             // and we suddenly have sources, trigger the search.
             if (query && hasSources && !hasSearchedWithSourcesRef.current && !loading) {
-                console.log('[Auto-retry] Sources loaded, executing search:', query);
                 if (executeSearch(query)) {
                     setHasSearched(true);
                 }
@@ -99,7 +100,7 @@ export function useHomePage() {
         // Subscribe to changes
         const unsubscribe = settingsStore.subscribe(updateSettings);
         return () => unsubscribe();
-    }, [query, loading, executeSearch, currentSortBy, sourcesLoading]);
+    }, [query, loading, executeSearch, currentSortBy]);
 
     const handleSearch = useCallback((searchQuery: string) => {
         if (!searchQuery.trim()) return;
@@ -117,16 +118,14 @@ export function useHomePage() {
         const cached = loadFromCache();
 
         if (urlQuery) {
-            setQuery(urlQuery);
             if (cached && cached.query === urlQuery && cached.results.length > 0) {
-                setHasSearched(true);
                 loadCachedResults(cached.results, cached.availableSources);
                 hasSearchedWithSourcesRef.current = true;
             } else {
-                handleSearch(urlQuery);
+                executeSearch(urlQuery);
             }
         }
-    }, [searchParams, loadFromCache, loadCachedResults, handleSearch]);
+    }, [searchParams, loadFromCache, loadCachedResults, executeSearch]);
 
 
 
@@ -143,7 +142,6 @@ export function useHomePage() {
         hasSearched,
         loading,
         sourcesLoading,
-        sourcesLoaded,
         results,
         availableSources,
         completedSources,
