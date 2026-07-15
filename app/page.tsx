@@ -24,6 +24,8 @@ function HomePage() {
     handleReset,
   } = useHomePage();
 
+  const showResults = results.length > 0;
+
   return (
     <div className="min-h-screen">
       {/* Glass Navbar */}
@@ -46,7 +48,7 @@ function HomePage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         {/* Results Section */}
-        {(results.length >= 1 || (!loading && results.length > 0)) && (
+        {showResults && (
           <SearchResults
             results={results}
             availableSources={availableSources}
@@ -74,11 +76,13 @@ function HomePage() {
 
 export default function Home() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--accent-color)] border-t-transparent"></div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--accent-color)] border-t-transparent"></div>
+        </div>
+      }
+    >
       <HomePage />
     </Suspense>
   );
