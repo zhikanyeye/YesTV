@@ -15,6 +15,7 @@ import { PlayerNavbar } from '@/components/player/PlayerNavbar';
 import { settingsStore } from '@/lib/store/settings-store';
 import { ExternalPlayerLauncher } from '@/components/player/ExternalPlayerLauncher';
 import { useSafeBackNavigation } from '@/lib/hooks/useSafeBackNavigation';
+import { FullPageSpinner } from '@/components/ui/FullPageSpinner';
 
 interface PlayerEpisode {
   url: string;
@@ -260,11 +261,7 @@ function PlayerContent() {
 
 export default function PlayerPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-color)]">
-        <div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--accent-color)] border-t-transparent"></div>
-      </div>
-    }>
+    <Suspense fallback={<FullPageSpinner className="bg-[var(--bg-color)]" />}>
       <PlayerContent />
     </Suspense>
   );

@@ -8,6 +8,7 @@ import { SearchResults } from '@/components/home/SearchResults';
 import { usePremiumHomePage } from '@/lib/hooks/usePremiumHomePage';
 import { PremiumContent } from '@/components/premium/PremiumContent';
 import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
+import { FullPageSpinner } from '@/components/ui/FullPageSpinner';
 
 function PremiumHomePage() {
     const {
@@ -72,11 +73,7 @@ function PremiumHomePage() {
 
 export default function PremiumPage() {
     return (
-        <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center bg-black">
-                <div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--accent-color)] border-t-transparent"></div>
-            </div>
-        }>
+        <Suspense fallback={<FullPageSpinner className="bg-black" />}>
             <PremiumHomePage />
         </Suspense>
     );
