@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { settingsStore } from '@/lib/store/settings-store';
 import { fetchSourcesFromUrl, mergeSources } from '@/lib/utils/source-import-utils';
-import type { SourceSubscription } from '@/lib/types';
+import type { SourceSubscription, VideoSource } from '@/lib/types';
 
 // Minimum time between syncs for the same subscription (5 minutes)
 const SYNC_COOLDOWN_MS = 5 * 60 * 1000;
@@ -9,14 +9,18 @@ const SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 const INITIAL_SYNC_DELAY_MS = 1200;
 
 let syncScheduled = false;
-let syncCompleted = false;
 let syncPromise: Promise<void> | null = null;
 
-function runSubscriptionSync(): Promise<void> {
-    if (syncCompleted) {
-        return Promise.resolve();
-    }
+function mergeSyncedSources(existing: VideoSource[], incoming: VideoSource[]): VideoSource[] {
+    const enabledById = new Map(existing.map(source => [source.id, source.enabled]));
+    return mergeSources(existing, incoming).map(source =>
+        enabledById.has(source.id)
+            ? { ...source, enabled: enabledById.get(source.id) }
+            : source
+    );
+}
 
+function runSubscriptionSync(): Promise<void> {
     if (syncPromise) {
         return syncPromise;
     }
@@ -28,14 +32,9 @@ function runSubscriptionSync(): Promise<void> {
             const activeSubscriptions = settings.subscriptions.filter((s: SourceSubscription) => s.autoRefresh !== false);
 
             if (activeSubscriptions.length === 0) {
-                syncCompleted = true;
                 return;
             }
 
-            let anyChanged = false;
-            let currentSources = [...settings.sources];
-            let currentPremiumSources = [...settings.premiumSources];
-            const updatedSubscriptions = [...settings.subscriptions];
             const now = Date.now();
 
             // Filter out subscriptions that were synced recently (within cooldown period)
@@ -44,7 +43,6 @@ function runSubscriptionSync(): Promise<void> {
             );
 
             if (subsToSync.length === 0) {
-                syncCompleted = true;
                 return;
             }
 
@@ -53,46 +51,47 @@ function runSubscriptionSync(): Promise<void> {
                 subsToSync.map((sub: SourceSubscription) => fetchSourcesFromUrl(sub.url))
             );
 
-            // Process results
+            const successfulResults: Array<{
+                subscriptionId: string;
+                normalSources: VideoSource[];
+                premiumSources: VideoSource[];
+            }> = [];
+
             results.forEach((result, index) => {
                 const sub = subsToSync[index];
                 if (result.status === 'fulfilled') {
-                    const fetchResult = result.value;
-
-                    if (fetchResult.normalSources.length > 0) {
-                        currentSources = mergeSources(currentSources, fetchResult.normalSources);
-                        anyChanged = true;
-                    }
-
-                    if (fetchResult.premiumSources.length > 0) {
-                        currentPremiumSources = mergeSources(currentPremiumSources, fetchResult.premiumSources);
-                        anyChanged = true;
-                    }
-
-                    // Update timestamp for successful sync
-                    const subIdx = updatedSubscriptions.findIndex(s => s.id === sub.id);
-                    if (subIdx !== -1) {
-                        updatedSubscriptions[subIdx] = {
-                            ...updatedSubscriptions[subIdx],
-                            lastUpdated: now
-                        };
-                        anyChanged = true;
-                    }
+                    successfulResults.push({
+                        subscriptionId: sub.id,
+                        normalSources: result.value.normalSources,
+                        premiumSources: result.value.premiumSources,
+                    });
                 } else {
                     console.error(`Failed to sync subscription: ${sub.name}`, result.reason);
                 }
             });
 
-            if (anyChanged) {
+            if (successfulResults.length > 0) {
+                const latestSettings = settingsStore.getSettings();
+                let currentSources = [...latestSettings.sources];
+                let currentPremiumSources = [...latestSettings.premiumSources];
+                const successfulIds = new Set(successfulResults.map(result => result.subscriptionId));
+
+                successfulResults.forEach(result => {
+                    currentSources = mergeSyncedSources(currentSources, result.normalSources);
+                    currentPremiumSources = mergeSyncedSources(currentPremiumSources, result.premiumSources);
+                });
+
                 settingsStore.saveSettings({
-                    ...settings,
+                    ...latestSettings,
                     sources: currentSources,
                     premiumSources: currentPremiumSources,
-                    subscriptions: updatedSubscriptions
+                    subscriptions: latestSettings.subscriptions.map(subscription =>
+                        successfulIds.has(subscription.id)
+                            ? { ...subscription, lastUpdated: now }
+                            : subscription
+                    ),
                 });
             }
-
-            syncCompleted = true;
         } finally {
             syncPromise = null;
         }
@@ -102,7 +101,7 @@ function runSubscriptionSync(): Promise<void> {
 }
 
 function scheduleSubscriptionSync() {
-    if (syncScheduled || syncCompleted) {
+    if (syncScheduled || syncPromise) {
         return;
     }
 
@@ -110,12 +109,14 @@ function scheduleSubscriptionSync() {
 
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
         window.requestIdleCallback(() => {
+            syncScheduled = false;
             void runSubscriptionSync();
         }, { timeout: 2000 });
         return;
     }
 
     setTimeout(() => {
+        syncScheduled = false;
         void runSubscriptionSync();
     }, INITIAL_SYNC_DELAY_MS);
 }
@@ -123,5 +124,6 @@ function scheduleSubscriptionSync() {
 export function useSubscriptionSync() {
     useEffect(() => {
         scheduleSubscriptionSync();
+        return settingsStore.subscribe(scheduleSubscriptionSync);
     }, []);
 }

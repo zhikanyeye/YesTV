@@ -1,18 +1,17 @@
 import { useRef, useCallback } from 'react';
-import { SOURCE_IDS } from '@/lib/utils/source-names';
 import { sortVideos } from '@/lib/utils/sort';
 import { binaryInsertVideos } from '@/lib/utils/sorted-insert';
 import { processSearchStream } from '@/lib/utils/search-stream';
 import type { SortOption } from '@/lib/store/settings-store';
 import { settingsStore } from '@/lib/store/settings-store';
-import type { Video } from '@/lib/types';
+import type { SourceBadge, Video, VideoSource } from '@/lib/types';
 import { useSearchState } from './useSearchState';
 
 type SearchState = ReturnType<typeof useSearchState>;
 
 interface UseSearchActionProps {
     state: SearchState;
-    onCacheUpdate: (query: string, results: any[], sources: any[]) => void;
+    onCacheUpdate: (query: string, results: Video[], sources: SourceBadge[], searchedSources: VideoSource[]) => void;
     onUrlUpdate: (query: string) => void;
 }
 
@@ -24,26 +23,29 @@ export function useSearchAction({ state, onCacheUpdate, onUrlUpdate }: UseSearch
         setCompletedSources,
         setTotalSources,
         setTotalVideosFound,
+        setFailedSources,
         startSearch,
     } = state;
 
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    const performSearch = useCallback(async (searchQuery: string, sources: any[] = [], sortBy: SortOption = 'default') => {
+    const performSearch = useCallback(async (searchQuery: string, sources: VideoSource[] = [], sortBy: SortOption = 'default') => {
         if (!searchQuery.trim()) return;
 
         // Resolve sources if not provided
         let targetSources = sources;
         if (!targetSources || targetSources.length === 0) {
             const settings = settingsStore.getSettings();
-            targetSources = [
-                ...settings.sources,
-                ...settings.subscriptions.filter(s => (s as any).enabled !== false), // Include valid subscriptions
-                // Maybe check premium settings? For main search, we usually include all enabled.
-                // But typically search implies general search. Premium might be separate?
-                // The prompt for "search" includes all.
-            ].filter(s => (s as any).enabled !== false);
+            targetSources = settings.sources.filter(source => source.enabled !== false);
         }
+
+        targetSources = Array.from(
+            new Map(
+                targetSources
+                    .filter(source => source.enabled !== false)
+                    .map(source => [source.id, source])
+            ).values()
+        );
 
         // Abort any ongoing search
         if (abortControllerRef.current) {
@@ -81,16 +83,20 @@ export function useSearchAction({ state, onCacheUpdate, onUrlUpdate }: UseSearch
                     setResults((prev) => binaryInsertVideos(prev, newVideos));
 
                     // Update source stats
-                    if (!sourcesMap.has(sourceId)) {
-                        sourcesMap.set(sourceId, {
-                            count: newVideos.length,
-                            name: newVideos[0]?.sourceName || sourceId,
-                        });
-                    }
+                    const existing = sourcesMap.get(sourceId);
+                    sourcesMap.set(sourceId, {
+                        count: (existing?.count || 0) + newVideos.length,
+                        name: existing?.name || newVideos[0]?.sourceName || sourceId,
+                    });
                 },
                 onProgress: (completed, found) => {
                     setCompletedSources(completed);
                     setTotalVideosFound(found);
+                },
+                onSourceError: (sourceId) => {
+                    setFailedSources(current =>
+                        current.includes(sourceId) ? current : [...current, sourceId]
+                    );
                 },
                 onComplete: () => {
                     setLoading(false);
@@ -109,7 +115,7 @@ export function useSearchAction({ state, onCacheUpdate, onUrlUpdate }: UseSearch
 
                         // Cache results
                         setTimeout(() => {
-                            onCacheUpdate(searchQuery, sorted, sources);
+                            onCacheUpdate(searchQuery, sorted, sources, targetSources);
                         }, 100);
 
                         return sorted;
@@ -131,7 +137,7 @@ export function useSearchAction({ state, onCacheUpdate, onUrlUpdate }: UseSearch
             }
             setLoading(false);
         }
-    }, [startSearch, onUrlUpdate, onCacheUpdate, setTotalSources, setResults, setCompletedSources, setTotalVideosFound, setLoading, setAvailableSources]);
+    }, [startSearch, onUrlUpdate, onCacheUpdate, setTotalSources, setResults, setCompletedSources, setTotalVideosFound, setFailedSources, setLoading, setAvailableSources]);
 
     const cancelSearch = useCallback(() => {
         if (abortControllerRef.current) {

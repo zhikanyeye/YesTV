@@ -2,18 +2,17 @@
 
 import { Badge } from '@/components/ui/Badge';
 import { Icons } from '@/components/ui/Icon';
-import type { SourceBadge } from '@/lib/types';
 
 interface ResultsHeaderProps {
   loading: boolean;
   resultsCount: number;
-  availableSources: SourceBadge[];
+  failedSourceCount?: number;
 }
 
 export function ResultsHeader({
   loading,
   resultsCount,
-  availableSources,
+  failedSourceCount = 0,
 }: ResultsHeaderProps) {
   return (
     <div className="flex flex-col gap-4 mb-6">
@@ -31,7 +30,12 @@ export function ResultsHeader({
             </Badge>
           )}
           {!loading && (
-            <Badge variant="primary">{resultsCount} 个视频</Badge>
+            <>
+              <Badge variant="primary">{resultsCount} 个视频</Badge>
+              {failedSourceCount > 0 && (
+                <Badge variant="secondary">{failedSourceCount} 个源失败</Badge>
+              )}
+            </>
           )}
         </div>
       </div>

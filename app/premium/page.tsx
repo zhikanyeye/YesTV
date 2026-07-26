@@ -19,6 +19,7 @@ function PremiumHomePage() {
         availableSources,
         completedSources,
         totalSources,
+        failedSources,
         handleSearch,
         handleReset,
     } = usePremiumHomePage();
@@ -51,12 +52,14 @@ function PremiumHomePage() {
                         availableSources={availableSources}
                         loading={loading}
                         isPremium={true}
+                        failedSourceCount={failedSources.length}
+                        searchKey={query}
                     />
                 )}
 
                 {/* No Results */}
                 {!loading && hasSearched && results.length === 0 && (
-                    <NoResults onReset={handleReset} />
+                    <NoResults onReset={handleReset} failedSourceCount={failedSources.length} />
                 )}
 
                 {/* Premium Content - Trending and Latest */}

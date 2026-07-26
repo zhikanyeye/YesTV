@@ -95,7 +95,7 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
 
       const videoUrl = `/player?${new URLSearchParams(params).toString()}`;
 
-      const cardId = `${video.source}-${video.vod_id}-${absoluteIndex}`;
+      const cardId = `${video.source}-${video.vod_id}-${video.vod_name}`;
 
       return { video, videoUrl, cardId, absoluteIndex };
     });

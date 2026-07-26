@@ -13,7 +13,12 @@ export function hasMinimumMatch(title: string, query: string): boolean {
   const normalizedTitle = title.toLowerCase();
   const normalizedQuery = query.toLowerCase().trim();
 
-  // Extract all 2+ character substrings from query
+  if (normalizedQuery.length === 0) return false;
+
+  if (normalizedQuery.length === 1) {
+    return normalizedTitle.includes(normalizedQuery);
+  }
+
   for (let i = 0; i <= normalizedQuery.length - 2; i++) {
     const substring = normalizedQuery.slice(i, i + 2);
     if (normalizedTitle.includes(substring)) {

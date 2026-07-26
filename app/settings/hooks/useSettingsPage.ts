@@ -30,30 +30,32 @@ export function useSettingsPage() {
     const [premiumUnlocked, setPremiumUnlocked] = useState(false);
 
     useEffect(() => {
-        const settings = settingsStore.getSettings();
-        setSources(settings.sources || []);
-        setSubscriptions(settings.subscriptions || []);
-        setSortBy(settings.sortBy);
-        setPasswordAccess(settings.passwordAccess);
-        setAccessPasswords(settings.accessPasswords);
-        setRealtimeLatency(settings.realtimeLatency);
-        setPremiumUnlocked(settings.premiumUnlocked || false);
+        const syncLocalState = () => {
+            const settings = settingsStore.getSettings();
+            setSubscriptions(settings.subscriptions || []);
+            setSortBy(settings.sortBy);
+            setPasswordAccess(settings.passwordAccess);
+            setAccessPasswords(settings.accessPasswords);
+            setRealtimeLatency(settings.realtimeLatency);
+            setPremiumUnlocked(settings.premiumUnlocked || false);
 
-        // If premium is unlocked, ensure premium sources are merged with current sources
-        // Use the default premium sources list to ensure all premium sources are available
-        if (settings.premiumUnlocked) {
-            const defaultPremiumSources = getDefaultPremiumSources();
-            if (defaultPremiumSources.length > 0) {
-                const mergedSources = mergeSources(settings.sources, defaultPremiumSources);
-                setSources(mergedSources);
+            if (settings.premiumUnlocked) {
+                setSources(mergeSources(settings.sources, getDefaultPremiumSources()));
+            } else {
+                setSources(settings.sources || []);
             }
-        }
+        };
+
+        syncLocalState();
+        const unsubscribe = settingsStore.subscribe(syncLocalState);
 
         // Fetch env password status
         fetch('/api/config')
             .then(res => res.json())
             .then(data => setEnvPasswordSet(data.hasEnvPassword))
             .catch(() => setEnvPasswordSet(false));
+
+        return unsubscribe;
     }, []);
 
     const handleSourcesChange = (newSources: VideoSource[]) => {
@@ -187,11 +189,11 @@ export function useSettingsPage() {
     const handleImportLink = (result: ImportResult, isSync: boolean = false): boolean => {
         try {
             // Merge normal sources
-            let updatedSources = mergeSources(sources, result.normalSources);
+            const updatedSources = mergeSources(sources, result.normalSources);
 
             // Merge premium sources if needed
             const currentSettings = settingsStore.getSettings();
-            let updatedPremiumSources = mergeSources(currentSettings.premiumSources, result.premiumSources);
+            const updatedPremiumSources = mergeSources(currentSettings.premiumSources, result.premiumSources);
 
             // Save everything
             settingsStore.saveSettings({

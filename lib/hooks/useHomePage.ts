@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useSearchCache } from '@/lib/hooks/useSearchCache';
+import { createSourceFingerprint, useSearchCache } from '@/lib/hooks/useSearchCache';
 import { useParallelSearch } from '@/lib/hooks/useParallelSearch';
 import { useSubscriptionSync } from '@/lib/hooks/useSubscriptionSync';
 import { settingsStore, type SortOption } from '@/lib/store/settings-store';
@@ -12,7 +12,8 @@ export function useHomePage() {
     const { loadFromCache, saveToCache } = useSearchCache('normal');
     const hasLoadedCache = useRef(false);
     const hasSearchedWithSourcesRef = useRef(false);
-    const initialEnabledSources = settingsStore.getSettings().sources.filter(s => s.enabled);
+    const searchedSourceFingerprintRef = useRef('');
+    const initialEnabledSources = settingsStore.getSettings().sources.filter(s => s.enabled !== false);
     const enabledSourcesRef = useRef(initialEnabledSources);
     const initialQuery = searchParams.get('q') || '';
 
@@ -32,6 +33,7 @@ export function useHomePage() {
         availableSources,
         completedSources,
         totalSources,
+        failedSources,
         performSearch,
         resetSearch,
         loadCachedResults,
@@ -48,13 +50,14 @@ export function useHomePage() {
         const settings = settingsStore.getSettings();
         const enabledSources = enabledSourcesRef.current.length > 0
             ? enabledSourcesRef.current
-            : settings.sources.filter(s => s.enabled);
+            : settings.sources.filter(s => s.enabled !== false);
 
         if (enabledSources.length === 0) {
             return false;
         }
 
         performSearch(searchQuery, enabledSources, settings.sortBy);
+        searchedSourceFingerprintRef.current = createSourceFingerprint(enabledSources);
         hasSearchedWithSourcesRef.current = true;
         return true;
     }, [performSearch]);
@@ -70,8 +73,10 @@ export function useHomePage() {
     useEffect(() => {
         const updateSettings = () => {
             const settings = settingsStore.getSettings();
-            const enabledSources = settings.sources.filter(s => s.enabled);
+            const enabledSources = settings.sources.filter(s => s.enabled !== false);
             const hasSources = enabledSources.length > 0;
+            const sourceFingerprint = createSourceFingerprint(enabledSources);
+            const sourcesChanged = searchedSourceFingerprintRef.current !== sourceFingerprint;
             enabledSourcesRef.current = enabledSources;
 
             // Update loading status
@@ -87,7 +92,13 @@ export function useHomePage() {
             // but the search (or lack thereof) is already stuck with empty sources.
             // If we have a query, and we haven't searched with sources yet,
             // and we suddenly have sources, trigger the search.
-            if (query && hasSources && !hasSearchedWithSourcesRef.current && !loading) {
+            if (
+                hasLoadedCache.current &&
+                query &&
+                hasSources &&
+                !loading &&
+                (!hasSearchedWithSourcesRef.current || sourcesChanged)
+            ) {
                 if (executeSearch(query)) {
                     setHasSearched(true);
                 }
@@ -115,11 +126,12 @@ export function useHomePage() {
         hasLoadedCache.current = true;
 
         const urlQuery = searchParams.get('q');
-        const cached = loadFromCache();
+        const cached = loadFromCache(enabledSourcesRef.current);
 
         if (urlQuery) {
             if (cached && cached.query === urlQuery && cached.results.length > 0) {
                 loadCachedResults(cached.results, cached.availableSources);
+                searchedSourceFingerprintRef.current = createSourceFingerprint(enabledSourcesRef.current);
                 hasSearchedWithSourcesRef.current = true;
             } else {
                 executeSearch(urlQuery);
@@ -133,6 +145,7 @@ export function useHomePage() {
         setHasSearched(false);
         setQuery('');
         hasSearchedWithSourcesRef.current = false;
+        searchedSourceFingerprintRef.current = '';
         resetSearch();
         router.replace('/', { scroll: false });
     }, [resetSearch, router]);
@@ -146,6 +159,7 @@ export function useHomePage() {
         availableSources,
         completedSources,
         totalSources,
+        failedSources,
         handleSearch,
         handleReset,
     };

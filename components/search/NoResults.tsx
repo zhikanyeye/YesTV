@@ -5,9 +5,10 @@ import { Icons } from '@/components/ui/Icon';
 
 interface NoResultsProps {
   onReset: () => void;
+  failedSourceCount?: number;
 }
 
-export function NoResults({ onReset }: NoResultsProps) {
+export function NoResults({ onReset, failedSourceCount = 0 }: NoResultsProps) {
   return (
     <div className="text-center py-20 animate-fade-in">
       <div 
@@ -19,7 +20,9 @@ export function NoResults({ onReset }: NoResultsProps) {
         未找到相关内容
       </h3>
       <p className="text-lg text-[var(--text-color-secondary)] mb-6">
-        试试其他关键词或检查拼写
+        {failedSourceCount > 0
+          ? `${failedSourceCount} 个视频源请求失败，请稍后重试`
+          : '试试其他关键词或检查拼写'}
       </p>
       <Button variant="primary" onClick={onReset}>
         返回首页
