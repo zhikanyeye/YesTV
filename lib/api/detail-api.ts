@@ -36,11 +36,7 @@ export async function getVideoDetail(
 
         const data: ApiDetailResponse = await response.json();
 
-        if (data.code !== 1 && data.code !== 0) {
-            throw new Error(data.msg || 'Invalid API response');
-        }
-
-        if (!data.list || data.list.length === 0) {
+        if (!Array.isArray(data.list) || data.list.length === 0) {
             throw new Error('Video not found');
         }
 

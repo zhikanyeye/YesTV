@@ -1,47 +1,35 @@
 import { Video } from '@/lib/types';
 import { getSourceName } from '@/lib/utils/source-names';
-import { calculateRelevanceScore, hasMinimumMatch } from '@/lib/utils/search';
+import { calculateRelevanceScore } from '@/lib/utils/search';
 
 interface StreamHandlerParams {
     reader: ReadableStreamDefaultReader<Uint8Array>;
     onStart: (totalSources: number) => void;
     onVideos: (videos: Video[], source: string) => void;
     onProgress: (completedSources: number, totalVideosFound: number) => void;
+    onSourceError: (sourceId: string) => void;
     onComplete: () => void;
     onError: (message: string) => void;
     currentQuery: string;
 }
+
+type StreamVideo = Video & { sourceDisplayName?: string };
 
 export async function processSearchStream({
     reader,
     onStart,
     onVideos,
     onProgress,
+    onSourceError,
     onComplete,
     onError,
     currentQuery,
 }: StreamHandlerParams) {
     const decoder = new TextDecoder();
     let buffer = '';
-    let timeoutId: NodeJS.Timeout | null = null;
     let isCompleted = false;
 
-    // Auto-complete if no progress for 3 seconds
-    const resetTimeout = () => {
-        if (timeoutId) clearTimeout(timeoutId);
-
-        timeoutId = setTimeout(() => {
-            if (!isCompleted) {
-
-                isCompleted = true;
-                onComplete();
-            }
-        }, 3000);
-    };
-
     try {
-        resetTimeout(); // Start initial timeout
-
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -58,26 +46,33 @@ export async function processSearchStream({
 
                     if (data.type === 'start') {
                         onStart(data.totalSources);
-                        resetTimeout();
                     } else if (data.type === 'videos') {
-                        const newVideos: Video[] = data.videos
-                            .filter((video: any) => hasMinimumMatch(video.vod_name, currentQuery))
-                            .map((video: any) => ({
+                        const videos = Array.isArray(data.videos) ? data.videos : [];
+                        const newVideos: Video[] = videos
+                            .filter((video: unknown): video is StreamVideo => {
+                                if (!video || typeof video !== 'object') return false;
+                                return typeof (video as StreamVideo).vod_name === 'string';
+                            })
+                            .map((video: StreamVideo) => ({
                                 ...video,
                                 sourceName: video.sourceDisplayName || getSourceName(video.source),
                                 isNew: true,
                                 relevanceScore: calculateRelevanceScore(video, currentQuery),
                             }));
-                        onVideos(newVideos, data.source);
-                        resetTimeout();
+                        if (newVideos.length > 0) {
+                            onVideos(newVideos, data.source);
+                        }
                     } else if (data.type === 'progress') {
                         onProgress(data.completedSources, data.totalVideosFound);
-                        resetTimeout();
+                    } else if (data.type === 'source-error') {
+                        onSourceError(data.source);
                     } else if (data.type === 'complete') {
-                        if (timeoutId) clearTimeout(timeoutId);
-                        isCompleted = true;
-                        onComplete();
+                        if (!isCompleted) {
+                            isCompleted = true;
+                            onComplete();
+                        }
                     } else if (data.type === 'error') {
+                        isCompleted = true;
                         onError(data.message);
                     }
                 } catch (error) {
@@ -85,10 +80,12 @@ export async function processSearchStream({
                 }
             }
         }
+
+        if (!isCompleted) {
+            isCompleted = true;
+            onError('Search stream ended unexpectedly');
+        }
     } catch (error) {
-        if (timeoutId) clearTimeout(timeoutId);
         throw error;
-    } finally {
-        if (timeoutId) clearTimeout(timeoutId);
     }
 }

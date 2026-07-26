@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import { sortVideos } from '@/lib/utils/sort';
 import type { SortOption } from '@/lib/store/settings-store';
-import type { Video, SourceBadge } from '@/lib/types';
+import type { Video, SourceBadge, VideoSource } from '@/lib/types';
 import { useSearchState } from './useSearchState';
 import { useSearchAction } from './useSearchAction';
 
@@ -14,14 +14,15 @@ interface ParallelSearchResult {
   completedSources: number;
   totalSources: number;
   totalVideosFound: number;
-  performSearch: (query: string, sources?: any[], sortBy?: SortOption) => Promise<void>;
+  failedSources: string[];
+  performSearch: (query: string, sources?: VideoSource[], sortBy?: SortOption) => Promise<void>;
   resetSearch: () => void;
-  loadCachedResults: (results: Video[], sources: any[]) => void;
+  loadCachedResults: (results: Video[], sources: SourceBadge[]) => void;
   applySorting: (sortBy: SortOption) => void;
 }
 
 export function useParallelSearch(
-  onCacheUpdate: (query: string, results: any[], sources: any[]) => void,
+  onCacheUpdate: (query: string, results: Video[], sources: SourceBadge[], searchedSources: VideoSource[]) => void,
   onUrlUpdate: (query: string) => void
 ): ParallelSearchResult {
   const state = useSearchState();
@@ -32,6 +33,7 @@ export function useParallelSearch(
     completedSources,
     totalSources,
     totalVideosFound,
+    failedSources,
     setResults,
     setAvailableSources,
     setTotalVideosFound,
@@ -55,7 +57,7 @@ export function useParallelSearch(
   /**
    * Load cached results
    */
-  const loadCachedResults = useCallback((cachedResults: Video[], cachedSources: any[]) => {
+  const loadCachedResults = useCallback((cachedResults: Video[], cachedSources: SourceBadge[]) => {
     setResults(cachedResults);
     setAvailableSources(cachedSources);
     setTotalVideosFound(cachedResults.length);
@@ -75,10 +77,10 @@ export function useParallelSearch(
     completedSources,
     totalSources,
     totalVideosFound,
+    failedSources,
     performSearch,
     resetSearch,
     loadCachedResults,
     applySorting,
   };
 }
-

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useSearchCache } from '@/lib/hooks/useSearchCache';
+import { createSourceFingerprint, useSearchCache } from '@/lib/hooks/useSearchCache';
 import { useParallelSearch } from '@/lib/hooks/useParallelSearch';
 import { useSubscriptionSync } from '@/lib/hooks/useSubscriptionSync';
 import { settingsStore, type SortOption } from '@/lib/store/settings-store';
@@ -13,6 +13,7 @@ export function usePremiumHomePage() {
     const { loadFromCache, saveToCache } = useSearchCache('premium');
     const hasLoadedCache = useRef(false);
     const hasSearchedWithSourcesRef = useRef(false);
+    const searchedSourceFingerprintRef = useRef('');
     const enabledPremiumSourcesRef = useRef<VideoSource[]>([]);
 
     const [query, setQuery] = useState('');
@@ -30,6 +31,7 @@ export function usePremiumHomePage() {
         availableSources,
         completedSources,
         totalSources,
+        failedSources,
         performSearch,
         resetSearch,
         loadCachedResults,
@@ -48,6 +50,7 @@ export function usePremiumHomePage() {
         }
 
         performSearch(searchQuery, sources, currentSortBy);
+        searchedSourceFingerprintRef.current = createSourceFingerprint(sources);
         hasSearchedWithSourcesRef.current = true;
         return true;
     }, [performSearch, currentSortBy]);
@@ -64,7 +67,9 @@ export function usePremiumHomePage() {
         const updateSettings = () => {
             const settings = settingsStore.getSettings();
 
-            const newPremiumSources = settings.premiumSources.filter(s => s.enabled);
+            const newPremiumSources = settings.premiumSources.filter(s => s.enabled !== false);
+            const sourceFingerprint = createSourceFingerprint(newPremiumSources);
+            const sourcesChanged = searchedSourceFingerprintRef.current !== sourceFingerprint;
             enabledPremiumSourcesRef.current = newPremiumSources;
 
             if (settings.sortBy !== currentSortBy) {
@@ -76,7 +81,13 @@ export function usePremiumHomePage() {
 
             // If we have a query, and we haven't searched with sources yet,
             // and we suddenly have sources, trigger the search.
-            if (query && hasSources && !hasSearchedWithSourcesRef.current && !loading) {
+            if (
+                hasLoadedCache.current &&
+                query &&
+                hasSources &&
+                !loading &&
+                (!hasSearchedWithSourcesRef.current || sourcesChanged)
+            ) {
                 if (executeSearch(query)) {
                     setHasSearched(true);
                 }
@@ -104,7 +115,7 @@ export function usePremiumHomePage() {
         hasLoadedCache.current = true;
 
         const urlQuery = searchParams.get('q');
-        const cached = loadFromCache();
+        const cached = loadFromCache(enabledPremiumSourcesRef.current);
 
         if (urlQuery) {
             setQuery(urlQuery);
@@ -112,6 +123,7 @@ export function usePremiumHomePage() {
             if (cached && cached.query === urlQuery && cached.results.length > 0) {
                 setHasSearched(true);
                 loadCachedResults(cached.results, cached.availableSources);
+                searchedSourceFingerprintRef.current = createSourceFingerprint(enabledPremiumSourcesRef.current);
                 hasSearchedWithSourcesRef.current = true;
                 return;
             }
@@ -125,6 +137,7 @@ export function usePremiumHomePage() {
         setHasSearched(false);
         setQuery('');
         hasSearchedWithSourcesRef.current = false;
+        searchedSourceFingerprintRef.current = '';
         resetSearch();
         router.replace('/premium', { scroll: false });
     }, [resetSearch, router]);
@@ -137,6 +150,7 @@ export function usePremiumHomePage() {
         availableSources,
         completedSources,
         totalSources,
+        failedSources,
         handleSearch,
         handleReset,
     };

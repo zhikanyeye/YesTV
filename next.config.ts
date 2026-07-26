@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   // Performance optimizations
   reactStrictMode: true,
   poweredByHeader: false,
+  allowedDevOrigins: ['*.monkeycode-ai.online'],
 
   // Compiler optimizations
   compiler: {

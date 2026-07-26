@@ -18,20 +18,15 @@ export async function fetchWithTimeout(
     options: RequestInit = {},
     timeout: number = REQUEST_TIMEOUT
 ): Promise<Response> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    const timeoutSignal = AbortSignal.timeout(timeout);
+    const signal = options.signal
+        ? AbortSignal.any([options.signal, timeoutSignal])
+        : timeoutSignal;
 
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        return response;
-    } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
-    }
+    return fetch(url, {
+        ...options,
+        signal,
+    });
 }
 
 /**
@@ -48,6 +43,10 @@ export async function withRetry<T>(
             return await fn();
         } catch (error) {
             lastError = error as Error;
+
+            if (lastError.name === 'AbortError') {
+                throw lastError;
+            }
 
             if (i < retries) {
                 await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (i + 1)));

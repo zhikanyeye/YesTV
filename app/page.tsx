@@ -21,6 +21,7 @@ function HomePage() {
     availableSources,
     completedSources,
     totalSources,
+    failedSources,
     handleSearch,
     handleReset,
   } = useHomePage();
@@ -54,6 +55,8 @@ function HomePage() {
             results={results}
             availableSources={availableSources}
             loading={loading}
+            failedSourceCount={failedSources.length}
+            searchKey={query}
           />
         )}
 
@@ -62,7 +65,7 @@ function HomePage() {
 
         {/* No Results */}
         {!loading && hasSearched && results.length === 0 && (
-          <NoResults onReset={handleReset} />
+          <NoResults onReset={handleReset} failedSourceCount={failedSources.length} />
         )}
       </main>
 

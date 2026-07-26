@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { SourceBadge, Video } from '@/lib/types';
+import type { SourceBadge, Video, VideoSource } from '@/lib/types';
 
 type CachedVideo = Omit<Video, 'vod_content' | 'vod_actor' | 'vod_director'>;
 
@@ -7,6 +7,8 @@ interface SearchCache {
   query: string;
   results: CachedVideo[];
   availableSources: SourceBadge[];
+  sourceFingerprint: string;
+  totalCount: number;
   timestamp: number;
 }
 
@@ -18,6 +20,13 @@ const MAX_CACHED_RESULTS = 300;
 
 function getScopedCacheKey(scope: SearchCacheScope): string {
   return `${CACHE_KEY}:${scope}`;
+}
+
+export function createSourceFingerprint(sources: VideoSource[]): string {
+  return sources
+    .map(source => `${source.id}:${source.baseUrl}:${source.searchPath}`)
+    .sort()
+    .join('|');
 }
 
 /**
@@ -34,23 +43,29 @@ const stripVideoData = (results: Video[]): CachedVideo[] => {
   });
 };
 
-const stripReducedVideoData = (results: Video[]): CachedVideo[] => stripVideoData(results).slice(0, 100);
-
 export function useSearchCache(scope: SearchCacheScope = 'normal') {
   const scopedCacheKey = getScopedCacheKey(scope);
 
   const saveToCache = useCallback((
     query: string,
     results: Video[],
-    sources: SourceBadge[]
+    sources: SourceBadge[],
+    searchedSources: VideoSource[]
   ) => {
     try {
+      if (results.length > MAX_CACHED_RESULTS) {
+        localStorage.removeItem(scopedCacheKey);
+        return;
+      }
+
       const strippedResults = stripVideoData(results);
 
       const cache: SearchCache = {
         query,
         results: strippedResults,
         availableSources: sources,
+        sourceFingerprint: createSourceFingerprint(searchedSources),
+        totalCount: results.length,
         timestamp: Date.now(),
       };
 
@@ -59,33 +74,27 @@ export function useSearchCache(scope: SearchCacheScope = 'normal') {
 
     } catch (error) {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
-        console.warn('[Cache] LocalStorage quota exceeded. Clearing cache and trying again with fewer results.');
-        try {
-          localStorage.removeItem(scopedCacheKey);
-          // Try saving only top 100 results if quota exceeded
-          const reducedResults = stripReducedVideoData(results);
-          const reducedCache = {
-            query,
-            results: reducedResults,
-            availableSources: sources,
-            timestamp: Date.now(),
-          };
-          localStorage.setItem(scopedCacheKey, JSON.stringify(reducedCache));
-        } catch (innerError) {
-          console.error('[Cache] Failed to save even reduced cache:', innerError);
-        }
+        console.warn('[Cache] LocalStorage quota exceeded. Search cache was cleared.');
+        localStorage.removeItem(scopedCacheKey);
       } else {
         console.error('[Cache] Failed to save search results to LocalStorage:', error);
       }
     }
   }, [scope, scopedCacheKey]);
 
-  const loadFromCache = useCallback((): SearchCache | null => {
+  const loadFromCache = useCallback((searchedSources: VideoSource[]): SearchCache | null => {
     try {
       const cached = localStorage.getItem(scopedCacheKey) || (scope === 'normal' ? localStorage.getItem(CACHE_KEY) : null);
       if (!cached) return null;
 
       const cache: SearchCache = JSON.parse(cached);
+
+      if (
+        cache.sourceFingerprint !== createSourceFingerprint(searchedSources) ||
+        cache.results.length < cache.totalCount
+      ) {
+        return null;
+      }
 
       // Check if cache is still valid
       if (Date.now() - cache.timestamp > CACHE_DURATION) {

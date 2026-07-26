@@ -11,10 +11,12 @@ interface SearchResultsProps {
     results: Video[];
     availableSources: SourceBadge[];
     loading: boolean;
+    failedSourceCount?: number;
+    searchKey?: string;
     isPremium?: boolean;
 }
 
-export function SearchResults({ results, availableSources, loading, isPremium = false }: SearchResultsProps) {
+export function SearchResults({ results, availableSources, loading, failedSourceCount = 0, searchKey = '', isPremium = false }: SearchResultsProps) {
     const deferredResults = useDeferredValue(results);
     const deferredSources = useDeferredValue(availableSources);
 
@@ -41,7 +43,7 @@ export function SearchResults({ results, availableSources, loading, isPremium = 
             <ResultsHeader
                 loading={loading}
                 resultsCount={results.length}
-                availableSources={availableSources}
+                failedSourceCount={failedSourceCount}
             />
 
             {/* Source Badges - Clickable video source filtering */}
@@ -65,7 +67,7 @@ export function SearchResults({ results, availableSources, loading, isPremium = 
             )}
 
             {/* Display filtered videos (both source and type filters applied) */}
-            <VideoGrid videos={finalFilteredVideos} isPremium={isPremium} />
+            <VideoGrid key={searchKey} videos={finalFilteredVideos} isPremium={isPremium} />
         </div>
     );
 }

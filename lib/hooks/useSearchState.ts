@@ -8,6 +8,7 @@ export function useSearchState() {
     const [completedSources, setCompletedSources] = useState(0);
     const [totalSources, setTotalSources] = useState(0);
     const [totalVideosFound, setTotalVideosFound] = useState(0);
+    const [failedSources, setFailedSources] = useState<string[]>([]);
     const currentQueryRef = useRef<string>('');
 
     const resetState = useCallback(() => {
@@ -17,6 +18,7 @@ export function useSearchState() {
         setCompletedSources(0);
         setTotalSources(0);
         setTotalVideosFound(0);
+        setFailedSources([]);
         currentQueryRef.current = '';
     }, []);
 
@@ -27,6 +29,7 @@ export function useSearchState() {
         setCompletedSources(0);
         setTotalSources(0);
         setTotalVideosFound(0);
+        setFailedSources([]);
         currentQueryRef.current = query;
     }, []);
 
@@ -43,6 +46,8 @@ export function useSearchState() {
         setTotalSources,
         totalVideosFound,
         setTotalVideosFound,
+        failedSources,
+        setFailedSources,
         currentQueryRef,
         resetState,
         startSearch,

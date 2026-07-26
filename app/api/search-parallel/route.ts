@@ -6,78 +6,110 @@
 
 import { NextRequest } from 'next/server';
 import { searchVideos } from '@/lib/api/client';
-import { getSourceById } from '@/lib/api/video-sources';
-import { getSourceName } from '@/lib/utils/source-names';
+import type { VideoItem, VideoSource } from '@/lib/types';
 
 
 // Timeout configuration
 const SEARCH_TIMEOUT_MS = 8000; // 8 second timeout for individual sources
+const SEARCH_CONCURRENCY = 8;
+
+function isVideoSource(value: unknown): value is VideoSource {
+  if (!value || typeof value !== 'object') return false;
+  const source = value as Partial<VideoSource>;
+  return Boolean(source.id && source.name && source.baseUrl && typeof source.searchPath === 'string');
+}
 
 export async function POST(request: NextRequest) {
   const encoder = new TextEncoder();
+  const activeControllers = new Set<AbortController>();
+  let cancelled = false;
 
-  // Helper to create a timeout promise
-  const createTimeout = (ms: number) => new Promise<never>((_, reject) => 
-    setTimeout(() => reject(new Error('Timeout')), ms)
-  );
+  const abortActiveSearches = () => {
+    cancelled = true;
+    activeControllers.forEach(controller => controller.abort());
+    activeControllers.clear();
+  };
+
+  request.signal.addEventListener('abort', abortActiveSearches, { once: true });
 
   const stream = new ReadableStream({
     async start(controller) {
+      const send = (data: unknown) => {
+        if (cancelled) return;
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+      };
+
       try {
-        const body = await request.json();
-        const { query, sources: sourceConfigs, page = 1 } = body;
+        const body = await request.json() as {
+          query?: unknown;
+          sources?: unknown;
+          page?: unknown;
+        };
+        const { query, sources: sourceConfigs } = body;
+        const page = typeof body.page === 'number' && body.page > 0 ? body.page : 1;
 
         // Validate input
         if (!query || typeof query !== 'string' || query.trim().length === 0) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          send({
             type: 'error',
             message: 'Invalid query'
-          })}\n\n`));
+          });
           controller.close();
           return;
         }
 
         // Use provided sources or fallback to empty (client should provide them)
         const sources = Array.isArray(sourceConfigs) && sourceConfigs.length > 0
-          ? sourceConfigs
+          ? sourceConfigs.filter(isVideoSource)
           : [];
 
         if (sources.length === 0) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          send({
             type: 'error',
             message: 'No valid sources provided'
-          })}\n\n`));
+          });
           controller.close();
           return;
         }
 
         // Send initial status
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        send({
           type: 'start',
           totalSources: sources.length
-        })}\n\n`));
-
-
+        });
 
         // Track progress
         let completedSources = 0;
         let totalVideosFound = 0;
 
-        // Search all sources in PARALLEL - don't wait for all to finish
-        const searchPromises = sources.map(async (source: any) => {
+        const searchSource = async (source: VideoSource) => {
           const startTime = performance.now(); // Track start time
-          try {
+          const sourceController = new AbortController();
+          let timedOut = false;
+          const abortFromRequest = () => sourceController.abort();
+          const timeoutId = setTimeout(() => {
+            timedOut = true;
+            sourceController.abort();
+          }, SEARCH_TIMEOUT_MS);
 
-            // Race between the actual search and timeout
-            const searchPromise = searchVideos(query.trim(), [source], page);
-            const result = await Promise.race([
-              searchPromise,
-              createTimeout(SEARCH_TIMEOUT_MS)
-            ]);
+          activeControllers.add(sourceController);
+          request.signal.addEventListener('abort', abortFromRequest, { once: true });
+
+          try {
+            const result = await searchVideos(
+              query.trim(),
+              [source],
+              page,
+              sourceController.signal
+            );
             
             const endTime = performance.now(); // Track end time
             const latency = Math.round(endTime - startTime); // Calculate latency in ms
-            const videos = result[0]?.results || [];
+            const sourceResult = result[0];
+            if (sourceResult?.error) {
+              throw new Error(sourceResult.error);
+            }
+            const videos = sourceResult?.results || [];
 
             completedSources++;
             totalVideosFound += videos.length;
@@ -86,37 +118,36 @@ export async function POST(request: NextRequest) {
 
             // Stream videos immediately as they arrive WITH latency data
             if (videos.length > 0) {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              send({
                 type: 'videos',
-                videos: videos.map((video: any) => ({
+                videos: videos.map((video: VideoItem) => ({
                   ...video,
-                  sourceDisplayName: getSourceName(source.id),
+                  sourceDisplayName: source.name,
                   latency, // Add latency to each video
                 })),
                 source: source.id,
                 completedSources,
                 totalSources: sources.length,
                 latency, // Also include at source level
-              })}\n\n`));
+              });
             }
 
             // Send progress update
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            send({
               type: 'progress',
               completedSources,
               totalSources: sources.length,
               totalVideosFound
-            })}\n\n`));
+            });
 
           } catch (error) {
+            if (cancelled || request.signal.aborted) return;
+
             const endTime = performance.now();
             const latency = Math.round(endTime - startTime);
-            
-            // Check if it's a timeout error
-            const isTimeout = error instanceof Error && error.message === 'Timeout';
-            
+
             // Log error but continue with other sources
-            if (isTimeout) {
+            if (timedOut) {
               console.warn(`[Search Parallel] Source ${source.id} timed out after ${SEARCH_TIMEOUT_MS}ms`);
             } else {
               console.error(`[Search Parallel] Source ${source.id} failed after ${latency}ms:`, error);
@@ -124,37 +155,60 @@ export async function POST(request: NextRequest) {
             
             completedSources++;
 
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            send({
+              type: 'source-error',
+              source: source.id,
+              sourceName: source.name,
+              message: timedOut ? 'Search timed out' : 'Search failed'
+            });
+
+            send({
               type: 'progress',
               completedSources,
               totalSources: sources.length,
               totalVideosFound
-            })}\n\n`));
+            });
+          } finally {
+            clearTimeout(timeoutId);
+            activeControllers.delete(sourceController);
+            request.signal.removeEventListener('abort', abortFromRequest);
           }
-        });
+        };
 
-        // Wait for all sources to complete
-        await Promise.all(searchPromises);
+        let nextSourceIndex = 0;
+        const worker = async () => {
+          while (!cancelled) {
+            const sourceIndex = nextSourceIndex++;
+            if (sourceIndex >= sources.length) return;
+            await searchSource(sources[sourceIndex]);
+          }
+        };
 
+        const workerCount = Math.min(SEARCH_CONCURRENCY, sources.length);
+        await Promise.all(Array.from({ length: workerCount }, () => worker()));
 
+        if (cancelled) return;
 
-        // Send completion signal
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        send({
           type: 'complete',
           totalVideosFound,
           totalSources: sources.length
-        })}\n\n`));
+        });
 
         controller.close();
 
       } catch (error) {
+        if (cancelled) return;
         console.error('Search error:', error);
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+        send({
           type: 'error',
           message: error instanceof Error ? error.message : 'Unknown error'
-        })}\n\n`));
+        });
         controller.close();
       }
+    },
+    cancel() {
+      abortActiveSearches();
     }
   });
 
@@ -166,6 +220,3 @@ export async function POST(request: NextRequest) {
     },
   });
 }
-
-
-
