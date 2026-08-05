@@ -60,9 +60,14 @@ export function DesktopVideoPlayer({
   const {
     setShowControls,
     setIsLoading,
-    setCurrentTime,
-    setDuration,
   } = actions;
+  const moreMenuTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => () => {
+    if (moreMenuTimeoutRef.current) {
+      clearTimeout(moreMenuTimeoutRef.current);
+    }
+  }, []);
 
   // Reset loading state and show spinner when source changes
   React.useEffect(() => {
@@ -88,7 +93,7 @@ export function DesktopVideoPlayer({
   });
 
   // Auto-skip intro/outro and auto-next episode
-  const { isOutroActive, isTransitioningToNextEpisode } = useAutoSkip({
+  const { isTransitioningToNextEpisode } = useAutoSkip({
     videoRef,
     currentTime,
     duration,
@@ -144,7 +149,6 @@ export function DesktopVideoPlayer({
 
       <DesktopOverlayWrapper
         data={data}
-        actions={actions}
         showControls={data.showControls}
         onTogglePlay={togglePlay}
         onSkipForward={logic.skipForward}
@@ -155,18 +159,18 @@ export function DesktopVideoPlayer({
         isProxied={src.includes('/api/proxy')}
         onToggleMoreMenu={() => actions.setShowMoreMenu(!data.showMoreMenu)}
         onMoreMenuMouseEnter={() => {
-          if (refs.moreMenuTimeoutRef.current) {
-            clearTimeout(refs.moreMenuTimeoutRef.current);
-            refs.moreMenuTimeoutRef.current = null;
+          if (moreMenuTimeoutRef.current) {
+            clearTimeout(moreMenuTimeoutRef.current);
+            moreMenuTimeoutRef.current = null;
           }
         }}
         onMoreMenuMouseLeave={() => {
-          if (refs.moreMenuTimeoutRef.current) {
-            clearTimeout(refs.moreMenuTimeoutRef.current);
+          if (moreMenuTimeoutRef.current) {
+            clearTimeout(moreMenuTimeoutRef.current);
           }
-          refs.moreMenuTimeoutRef.current = setTimeout(() => {
+          moreMenuTimeoutRef.current = setTimeout(() => {
             actions.setShowMoreMenu(false);
-            refs.moreMenuTimeoutRef.current = null;
+            moreMenuTimeoutRef.current = null;
           }, 800); // Increased timeout for better stability
         }}
         onCopyLink={logic.handleCopyLink}
@@ -178,8 +182,6 @@ export function DesktopVideoPlayer({
         onSpeedChange={logic.changePlaybackSpeed}
         onSpeedMenuMouseEnter={logic.clearSpeedMenuTimeout}
         onSpeedMenuMouseLeave={logic.startSpeedMenuTimeout}
-        // Portal container
-        containerRef={containerRef}
       />
 
       <DesktopControlsWrapper

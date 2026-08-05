@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
+import type { Tag } from '../SortableTag';
 
-const DEFAULT_TAG = { id: 'popular', label: '热门', value: '热门' };
+const DEFAULT_TAG: Tag = { id: 'popular', label: '热门', value: '热门' };
 
 const STORAGE_KEY_PREFIX = 'kvideo_custom_tags_';
 
 export function useTagManager() {
     const [contentType, setContentType] = useState<'movie' | 'tv'>('movie');
     const [selectedTag, setSelectedTag] = useState(DEFAULT_TAG.value);
-    const [tags, setTags] = useState<any[]>([]);
+    const [tags, setTags] = useState<Tag[]>([]);
     const [isLoadingTags, setIsLoadingTags] = useState(false);
     const [newTagInput, setNewTagInput] = useState('');
     const [showTagManager, setShowTagManager] = useState(false);
@@ -23,7 +24,7 @@ export function useTagManager() {
             const saved = localStorage.getItem(storageKey);
             if (saved) {
                 try {
-                    setTags(JSON.parse(saved));
+                    setTags(JSON.parse(saved) as Tag[]);
                     return;
                 } catch (e) {
                     console.error('Failed to parse saved tags', e);
@@ -34,7 +35,7 @@ export function useTagManager() {
             setIsLoadingTags(true);
             try {
                 const response = await fetch(`/api/douban/tags?type=${contentType}`);
-                const data = await response.json();
+                const data = await response.json() as { tags?: string[] };
                 if (data.tags && Array.isArray(data.tags)) {
                     const mappedTags = data.tags.map((label: string) => ({
                         id: label === '热门' ? 'popular' : `tag_${label}`,
@@ -43,7 +44,7 @@ export function useTagManager() {
                     }));
 
                     // If "热门" isn't in the list, add it to the front
-                    if (!mappedTags.some((t: any) => t.value === '热门')) {
+                    if (!mappedTags.some((tag) => tag.value === '热门')) {
                         mappedTags.unshift(DEFAULT_TAG);
                     }
 
@@ -65,7 +66,7 @@ export function useTagManager() {
         setSelectedTag(DEFAULT_TAG.value);
     }, [contentType, storageKey]);
 
-    const saveTags = (newTags: any[]) => {
+    const saveTags = (newTags: Tag[]) => {
         setTags(newTags);
         localStorage.setItem(storageKey, JSON.stringify(newTags));
     };
@@ -95,21 +96,21 @@ export function useTagManager() {
         setIsLoadingTags(true);
         try {
             const response = await fetch(`/api/douban/tags?type=${contentType}`);
-            const data = await response.json();
+            const data = await response.json() as { tags?: string[] };
             if (data.tags && Array.isArray(data.tags)) {
                 const mappedTags = data.tags.map((label: string) => ({
                     id: label === '热门' ? 'popular' : `tag_${label}`,
                     label,
                     value: label,
                 }));
-                if (!mappedTags.some((t: any) => t.value === '热门')) {
+                if (!mappedTags.some((tag) => tag.value === '热门')) {
                     mappedTags.unshift(DEFAULT_TAG);
                 }
                 setTags(mappedTags);
             } else {
                 setTags([DEFAULT_TAG]);
             }
-        } catch (error) {
+        } catch {
             setTags([DEFAULT_TAG]);
         } finally {
             setIsLoadingTags(false);

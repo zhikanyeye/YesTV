@@ -45,6 +45,18 @@ import { exportSettings, importSettings, SEARCH_HISTORY_KEY, WATCH_HISTORY_KEY }
 
 const SETTINGS_KEY = 'kvideo-settings';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function hasSourceIdentity(value: unknown): value is VideoSource {
+  return isRecord(value) && Boolean(value.id) && Boolean(value.name) && Boolean(value.baseUrl);
+}
+
+function hasSubscriptionIdentity(value: unknown): value is SourceSubscription {
+  return isRecord(value) && Boolean(value.id) && Boolean(value.name) && Boolean(value.url);
+}
+
 export const getDefaultSources = (): VideoSource[] => DEFAULT_SOURCES;
 export const getDefaultPremiumSources = (): VideoSource[] => PREMIUM_SOURCES;
 
@@ -56,13 +68,15 @@ function getEnvSubscriptions(customValue?: string): SourceSubscription[] {
 
   // 1. Try JSON
   try {
-    const raw = JSON.parse(envValue);
+    const raw: unknown = JSON.parse(envValue);
     if (Array.isArray(raw)) {
       return raw
-        .filter((item: any) => item && typeof item.name === 'string' && typeof item.url === 'string')
-        .map((item: any) => createSubscription(item.name, item.url));
+        .filter((item): item is { name: string; url: string } =>
+          isRecord(item) && typeof item.name === 'string' && typeof item.url === 'string'
+        )
+        .map((item) => createSubscription(item.name, item.url));
     }
-  } catch (e) {
+  } catch {
     // Ignore JSON parse error, try direct URL
   }
 
@@ -139,12 +153,15 @@ export const settingsStore = {
     }
 
     try {
-      const parsed = JSON.parse(stored);
+      const parsed: unknown = JSON.parse(stored);
+      const storedSettings = isRecord(parsed) ? parsed : {};
       // Get ENV subscriptions
       const envSubscriptions = getEnvSubscriptions();
 
       // Parse stored subscriptions
-      const storedSubscriptions = Array.isArray(parsed.subscriptions) ? parsed.subscriptions : [];
+      const storedSubscriptions = Array.isArray(storedSettings.subscriptions)
+        ? storedSettings.subscriptions.filter(hasSubscriptionIdentity)
+        : [];
 
       // Merge: ENV subscriptions take precedence for existence, but we want to keep local state (like lastUpdated) if possible
       // However, for simplicity and ensuring "auto update" as user requested, if it's in ENV, we act as if it's a fresh/enforced source
@@ -169,33 +186,33 @@ export const settingsStore = {
       });
 
       // Filter out invalid sources (missing baseUrl etc)
-      const validSources = (Array.isArray(parsed.sources) ? parsed.sources : getDefaultSources())
-        .filter((s: any) => s && s.id && s.name && s.baseUrl);
+      const validSources = (Array.isArray(storedSettings.sources) ? storedSettings.sources : getDefaultSources())
+        .filter(hasSourceIdentity);
 
-      const validPremiumSources = (Array.isArray(parsed.premiumSources) ? parsed.premiumSources : getDefaultPremiumSources())
-        .filter((s: any) => s && s.id && s.name && s.baseUrl);
+      const validPremiumSources = (Array.isArray(storedSettings.premiumSources) ? storedSettings.premiumSources : getDefaultPremiumSources())
+        .filter(hasSourceIdentity);
 
       // Validate that parsed data has all required properties
       return {
         sources: validSources,
         premiumSources: validPremiumSources,
-        subscriptions: mergedSubscriptions.filter((s: any) => s && s.id && s.name && s.url),
-        sortBy: parsed.sortBy || 'default',
-        searchHistory: parsed.searchHistory !== undefined ? parsed.searchHistory : true,
-        watchHistory: parsed.watchHistory !== undefined ? parsed.watchHistory : true,
-        passwordAccess: parsed.passwordAccess !== undefined ? parsed.passwordAccess : false,
-        accessPasswords: Array.isArray(parsed.accessPasswords) ? parsed.accessPasswords : [],
-        premiumUnlocked: parsed.premiumUnlocked !== undefined ? parsed.premiumUnlocked : false,
-        autoNextEpisode: parsed.autoNextEpisode !== undefined ? parsed.autoNextEpisode : true,
-        autoSkipIntro: parsed.autoSkipIntro !== undefined ? parsed.autoSkipIntro : false,
-        skipIntroSeconds: typeof parsed.skipIntroSeconds === 'number' ? parsed.skipIntroSeconds : 0,
-        autoSkipOutro: parsed.autoSkipOutro !== undefined ? parsed.autoSkipOutro : false,
-        skipOutroSeconds: typeof parsed.skipOutroSeconds === 'number' ? parsed.skipOutroSeconds : 0,
-        showModeIndicator: parsed.showModeIndicator !== undefined ? parsed.showModeIndicator : false,
-        showResolutionIndicator: parsed.showResolutionIndicator !== undefined ? parsed.showResolutionIndicator : false,
-        realtimeLatency: parsed.realtimeLatency !== undefined ? parsed.realtimeLatency : false,
-        searchDisplayMode: parsed.searchDisplayMode !== undefined ? parsed.searchDisplayMode : 'normal',
-        episodeReverseOrder: parsed.episodeReverseOrder !== undefined ? parsed.episodeReverseOrder : false,
+        subscriptions: mergedSubscriptions.filter(hasSubscriptionIdentity),
+        sortBy: (storedSettings.sortBy as SortOption) || 'default',
+        searchHistory: storedSettings.searchHistory !== undefined ? Boolean(storedSettings.searchHistory) : true,
+        watchHistory: storedSettings.watchHistory !== undefined ? Boolean(storedSettings.watchHistory) : true,
+        passwordAccess: storedSettings.passwordAccess !== undefined ? Boolean(storedSettings.passwordAccess) : false,
+        accessPasswords: Array.isArray(storedSettings.accessPasswords) ? storedSettings.accessPasswords.filter((password): password is string => typeof password === 'string') : [],
+        premiumUnlocked: storedSettings.premiumUnlocked !== undefined ? Boolean(storedSettings.premiumUnlocked) : false,
+        autoNextEpisode: storedSettings.autoNextEpisode !== undefined ? Boolean(storedSettings.autoNextEpisode) : true,
+        autoSkipIntro: storedSettings.autoSkipIntro !== undefined ? Boolean(storedSettings.autoSkipIntro) : false,
+        skipIntroSeconds: typeof storedSettings.skipIntroSeconds === 'number' ? storedSettings.skipIntroSeconds : 0,
+        autoSkipOutro: storedSettings.autoSkipOutro !== undefined ? Boolean(storedSettings.autoSkipOutro) : false,
+        skipOutroSeconds: typeof storedSettings.skipOutroSeconds === 'number' ? storedSettings.skipOutroSeconds : 0,
+        showModeIndicator: storedSettings.showModeIndicator !== undefined ? Boolean(storedSettings.showModeIndicator) : false,
+        showResolutionIndicator: storedSettings.showResolutionIndicator !== undefined ? Boolean(storedSettings.showResolutionIndicator) : false,
+        realtimeLatency: storedSettings.realtimeLatency !== undefined ? Boolean(storedSettings.realtimeLatency) : false,
+        searchDisplayMode: typeof storedSettings.searchDisplayMode === 'string' ? storedSettings.searchDisplayMode : 'normal',
+        episodeReverseOrder: storedSettings.episodeReverseOrder !== undefined ? Boolean(storedSettings.episodeReverseOrder) : false,
       };
     } catch {
       // Even if localStorage fails, we should return defaults + ENV subscriptions

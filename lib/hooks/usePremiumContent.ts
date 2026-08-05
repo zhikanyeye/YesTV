@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll';
 import { settingsStore } from '@/lib/store/settings-store';
+import type { SourceSubscription, VideoSource } from '@/lib/types';
 
 interface PremiumVideo {
     vod_id: string | number;
@@ -12,6 +13,17 @@ interface PremiumVideo {
 }
 
 const PAGE_LIMIT = 20;
+
+type PremiumSubscription = SourceSubscription & Pick<VideoSource, 'enabled' | 'group'>;
+
+function isPremiumSubscription(source: SourceSubscription): source is PremiumSubscription {
+    const subscription = source as unknown as Record<string, unknown>;
+    return subscription.group === 'premium';
+}
+
+function isEnabledSource(source: VideoSource | PremiumSubscription): boolean {
+    return source.enabled !== false;
+}
 
 export function usePremiumContent(categoryValue: string) {
     const [videos, setVideos] = useState<PremiumVideo[]>([]);
@@ -34,8 +46,8 @@ export function usePremiumContent(categoryValue: string) {
             const premiumSources = [
                 ...settings.premiumSources,
                 // Check if any subscription sources are marked as premium
-                ...settings.subscriptions.filter(s => (s as any).group === 'premium')
-            ].filter(s => (s as any).enabled !== false);
+                ...settings.subscriptions.filter(isPremiumSubscription)
+            ].filter(isEnabledSource);
 
             if (premiumSources.length === 0) {
                 setLoading(false);
@@ -92,8 +104,8 @@ export function usePremiumContent(categoryValue: string) {
             const settings = settingsStore.getSettings();
             const premiumSources = [
                 ...settings.premiumSources,
-                ...settings.subscriptions.filter(s => (s as any).group === 'premium')
-            ].filter(s => (s as any).enabled !== false);
+                ...settings.subscriptions.filter(isPremiumSubscription)
+            ].filter(isEnabledSource);
 
             const currentSourceCount = premiumSources.length;
 

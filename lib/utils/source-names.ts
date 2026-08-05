@@ -38,6 +38,26 @@ export function getSourceName(sourceId: string): string {
     'feifan1': '非凡线路1',
     'moduzy': '魔都影视',
     'leba': '乐播资源',
+    'ffzy': '非凡资源',
+    'zitv': '快看m3u8',
+    'maoyan': '猫眼资源',
+    'xigua': '西瓜资源',
+    '360zy': '360资源',
+    'dazhong': '大众资源',
+    '98zy': '98资源',
+    'p2100': 'p2100影视',
+    'baidu': '百度资源',
+    'uku': 'uku资源',
+    'uku88': 'uku资源(uku88)',
+    'iqiyi': 'iqiyi资源',
+    'hhzy': '欢欢资源',
+    'moduapi': '魔都资源(moduapi)',
+    'hongniuzy3': '红牛资源',
+    'hongniuzy4': '红牛资源',
+    'ffzy3': '非凡影视',
+    'ffzy5': '非凡影视',
+    'ffzytv': '非凡影视',
+    'liangzi': '量子资源',
   };
   return sourceNames[sourceId] || sourceId;
 }
@@ -49,5 +69,8 @@ export const SOURCE_IDS = [
   'guangsu2', 'youku', 'yilingba', 'huya', 'xinlang', 'ikun',
   'lezi', 'xinlang2', 'yilingba2', 'baofeng2', 'wolong2', 'lezi2',
   'feifan', 'aidan', 'feifanapi', 'feifancj', 'feifancj2', 'feifan1',
-  'moduzy', 'leba'
+  'moduzy', 'leba', 'ffzy', 'zitv', 'maoyan', 'baidu', 'uku', 'uku88', 'iqiyi',
+  'xigua', '360zy', 'dazhong', '98zy', 'hhzy', 'moduapi', 'hongniuzy3', 'hongniuzy4',
+  'ffzy3', 'ffzy5', 'ffzytv',
+  'p2100', 'liangzi',
 ];

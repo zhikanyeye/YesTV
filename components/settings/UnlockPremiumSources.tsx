@@ -27,7 +27,7 @@ export function UnlockPremiumSources({ unlocked, onUnlock }: UnlockPremiumSource
             } else {
                 setMessage('❌ 秘钥错误，请重试');
             }
-        } catch (error) {
+        } catch {
             setMessage('❌ 验证失败，请稍后重试');
         } finally {
             setIsVerifying(false);
@@ -60,7 +60,7 @@ export function UnlockPremiumSources({ unlocked, onUnlock }: UnlockPremiumSource
                     </p>
                     <div className="bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] border border-[var(--accent-color)] rounded-[var(--radius-xl)] p-4">
                         <p className="text-sm text-[var(--text-color)]">
-                            💡 高级源已添加到视频源列表中，您可以在下方的"视频源管理"中查看和管理它们
+                            💡 高级源已添加到视频源列表中，您可以在下方的&quot;视频源管理&quot;中查看和管理它们
                         </p>
                     </div>
                 </div>

@@ -1,4 +1,4 @@
-import { useState, FormEvent, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Icons } from '@/components/ui/Icon';

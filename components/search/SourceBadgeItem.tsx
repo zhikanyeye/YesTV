@@ -15,12 +15,10 @@ interface SourceBadgeItemProps {
 }
 
 export function SourceBadgeItem({
-  id,
   name,
   count,
   isSelected,
   onToggle,
-  isFocused = false,
   onFocus,
   innerRef,
 }: SourceBadgeItemProps) {

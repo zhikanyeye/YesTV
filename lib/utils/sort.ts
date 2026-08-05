@@ -5,6 +5,8 @@
 import type { SortOption } from '@/lib/store/settings-store';
 import type { Video } from '@/lib/types';
 
+type ScoredVideo = Video & { vod_score?: number | string };
+
 export function sortVideos(videos: Video[], sortBy: SortOption): Video[] {
   const sorted = [...videos];
 
@@ -12,8 +14,8 @@ export function sortVideos(videos: Video[], sortBy: SortOption): Video[] {
     case 'relevance':
       // Sort by relevance score (highest first)
       return sorted.sort((a, b) => {
-        const scoreA = (a as any).relevanceScore || 0;
-        const scoreB = (b as any).relevanceScore || 0;
+        const scoreA = a.relevanceScore || 0;
+        const scoreB = b.relevanceScore || 0;
         return scoreB - scoreA;
       });
 
@@ -44,8 +46,8 @@ export function sortVideos(videos: Video[], sortBy: SortOption): Video[] {
     case 'rating-desc':
       // Sort by rating if available (placeholder for future implementation)
       return sorted.sort((a, b) => {
-        const ratingA = (a as any).vod_score || 0;
-        const ratingB = (b as any).vod_score || 0;
+        const ratingA = Number((a as ScoredVideo).vod_score) || 0;
+        const ratingB = Number((b as ScoredVideo).vod_score) || 0;
         return ratingB - ratingA;
       });
 
@@ -65,8 +67,8 @@ export function sortVideos(videos: Video[], sortBy: SortOption): Video[] {
     default:
       // Default: by relevance then latency
       return sorted.sort((a, b) => {
-        const scoreA = (a as any).relevanceScore || 0;
-        const scoreB = (b as any).relevanceScore || 0;
+        const scoreA = a.relevanceScore || 0;
+        const scoreB = b.relevanceScore || 0;
 
         if (scoreA !== scoreB) {
           return scoreB - scoreA;

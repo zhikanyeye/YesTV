@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
             const latency = Math.round(endTime - startTime);
 
             return NextResponse.json({ latency, success: true });
-        } catch (fetchError) {
+        } catch {
             // If HEAD fails, try GET with timeout
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -72,4 +72,3 @@ export async function POST(request: NextRequest) {
         );
     }
 }
-

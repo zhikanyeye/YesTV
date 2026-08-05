@@ -45,17 +45,17 @@ export function useSourceBadges<T extends { source?: string; sourceName?: string
   useEffect(() => {
     const availableSourceIds = new Set(availableSources.map(s => s.id));
 
-    setSelectedSources(prev => {
-      const filtered = new Set(
-        Array.from(prev).filter(sourceId => availableSourceIds.has(sourceId))
-      );
+    const timer = setTimeout(() => {
+      setSelectedSources(prev => {
+        const filtered = new Set(
+          Array.from(prev).filter(sourceId => availableSourceIds.has(sourceId))
+        );
 
-      // Only update if changed
-      if (filtered.size !== prev.size) {
-        return filtered;
-      }
-      return prev;
-    });
+        return filtered.size === prev.size ? prev : filtered;
+      });
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [availableSources]);
 
   return {

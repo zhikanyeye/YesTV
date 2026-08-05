@@ -13,7 +13,6 @@ interface DesktopMoreMenuProps {
     onMouseEnter: () => void;
     onMouseLeave: () => void;
     onCopyLink: (type?: 'original' | 'proxy') => void;
-    containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function DesktopMoreMenu({
@@ -23,7 +22,6 @@ export function DesktopMoreMenu({
     onMouseEnter,
     onMouseLeave,
     onCopyLink,
-    containerRef
 }: DesktopMoreMenuProps) {
     const {
         autoNextEpisode,
@@ -46,25 +44,23 @@ export function DesktopMoreMenu({
     const [menuPosition, setMenuPosition] = React.useState({ top: 0, left: 0 });
 
     React.useEffect(() => {
-        if (showMoreMenu && buttonRef.current && containerRef.current) {
+        if (showMoreMenu && buttonRef.current) {
             const buttonRect = buttonRef.current.getBoundingClientRect();
-            const containerRect = containerRef.current.getBoundingClientRect();
 
             setMenuPosition({
-                top: buttonRect.bottom - containerRect.top + 10,
-                left: buttonRect.left - containerRect.left
+                top: buttonRect.bottom + 10,
+                left: buttonRect.left
             });
         }
-    }, [showMoreMenu, containerRef]);
+    }, [showMoreMenu]);
 
     const handleToggle = () => {
-        if (!showMoreMenu && buttonRef.current && containerRef.current) {
+        if (!showMoreMenu && buttonRef.current) {
             const buttonRect = buttonRef.current.getBoundingClientRect();
-            const containerRect = containerRef.current.getBoundingClientRect();
 
             setMenuPosition({
-                top: buttonRect.bottom - containerRect.top + 10,
-                left: buttonRect.left - containerRect.left
+                top: buttonRect.bottom + 10,
+                left: buttonRect.left
             });
         }
         onToggleMoreMenu();
@@ -72,7 +68,7 @@ export function DesktopMoreMenu({
 
     const MenuContent = (
         <div
-            className="absolute z-[9999] bg-[var(--glass-bg)] backdrop-blur-[25px] saturate-[180%] rounded-[var(--radius-2xl)] border border-[var(--glass-border)] shadow-[var(--shadow-md)] p-2 w-fit min-w-[220px] animate-in fade-in zoom-in-95 duration-200"
+            className="fixed z-[9999] bg-[var(--glass-bg)] backdrop-blur-[25px] saturate-[180%] rounded-[var(--radius-2xl)] border border-[var(--glass-border)] shadow-[var(--shadow-md)] p-2 w-fit min-w-[220px] animate-in fade-in zoom-in-95 duration-200"
             style={{
                 top: menuPosition.top,
                 left: menuPosition.left,
@@ -265,7 +261,7 @@ export function DesktopMoreMenu({
             </button>
 
             {/* More Menu Dropdown (Portal) */}
-            {showMoreMenu && typeof document !== 'undefined' && createPortal(MenuContent, containerRef.current || document.body)}
+            {showMoreMenu && typeof document !== 'undefined' && createPortal(MenuContent, document.body)}
         </div>
     );
 }

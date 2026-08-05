@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useInfiniteScroll } from '@/lib/hooks/useInfiniteScroll';
+import type { Tag } from '../SortableTag';
 
-interface DoubanMovie {
+export interface DoubanMovie {
     id: string;
     title: string;
     cover: string;
@@ -11,7 +12,7 @@ interface DoubanMovie {
 
 const PAGE_LIMIT = 20;
 
-export function usePopularMovies(selectedTag: string, tags: any[], contentType: 'movie' | 'tv' = 'movie') {
+export function usePopularMovies(selectedTag: string, tags: Tag[], contentType: 'movie' | 'tv' = 'movie') {
     const [movies, setMovies] = useState<DoubanMovie[]>([]);
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);

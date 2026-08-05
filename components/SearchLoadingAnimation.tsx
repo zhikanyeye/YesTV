@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface SearchLoadingAnimationProps {
   currentSource?: string;
@@ -11,7 +11,6 @@ interface SearchLoadingAnimationProps {
 }
 
 export function SearchLoadingAnimation({
-  currentSource,
   checkedSources = 0,
   totalSources = 16,
   isPaused = false,

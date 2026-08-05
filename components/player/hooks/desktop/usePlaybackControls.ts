@@ -100,7 +100,7 @@ export function usePlaybackControls({
         videoRef.current.play().catch((err: Error) => {
             console.warn('Autoplay was prevented:', err);
         });
-    }, [videoRef, setDuration, setIsLoading, initialTime, playbackRate, setVideoResolution]);
+    }, [videoRef, setDuration, initialTime, playbackRate, setVideoResolution]);
 
     // Handle late initialization of initialTime (e.g. from async storage hydration)
     useEffect(() => {

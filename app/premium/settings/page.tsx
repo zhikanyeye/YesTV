@@ -3,7 +3,6 @@
 import { AddSourceModal } from '@/components/settings/AddSourceModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PremiumSourceSettings } from '@/components/settings/PremiumSourceSettings';
-import { SettingsHeader } from '@/components/settings/SettingsHeader';
 import { usePremiumSettingsPage } from './hooks/usePremiumSettingsPage';
 import Link from 'next/link';
 

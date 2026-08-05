@@ -7,12 +7,8 @@ export function ServiceWorkerRegister() {
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js').then(
-                    (registration) => {
-                        // Registration successful
-                    })
-                    .catch((err) => {
-                        // Registration failed
-                    });
+                    () => undefined
+                ).catch(() => undefined);
             });
         }
     }, []);

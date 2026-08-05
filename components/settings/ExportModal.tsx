@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -8,23 +8,18 @@ interface ExportModalProps {
   onExport: (includeSearchHistory: boolean, includeWatchHistory: boolean) => void;
 }
 
-export function ExportModal({ isOpen, onClose, onExport }: ExportModalProps) {
+export function ExportModal(props: ExportModalProps) {
+  return props.isOpen ? <ExportModalContent {...props} /> : null;
+}
+
+function ExportModalContent({ isOpen, onClose, onExport }: ExportModalProps) {
   const [includeSearchHistory, setIncludeSearchHistory] = useState(true);
   const [includeWatchHistory, setIncludeWatchHistory] = useState(true);
-
-  useEffect(() => {
-    if (isOpen) {
-      setIncludeSearchHistory(true);
-      setIncludeWatchHistory(true);
-    }
-  }, [isOpen]);
 
   const handleExport = () => {
     onExport(includeSearchHistory, includeWatchHistory);
     onClose();
   };
-
-  if (!isOpen) return null;
 
   return (
     <>

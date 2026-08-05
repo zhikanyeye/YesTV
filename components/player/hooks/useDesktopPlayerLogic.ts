@@ -43,13 +43,11 @@ export function useDesktopPlayerLogic({
 
     const {
         isPlaying,
-        currentTime,
         duration,
         volume,
         isMuted,
         isFullscreen,
         showControls,
-        isLoading,
         playbackRate,
         showSpeedMenu,
         isPiPSupported,

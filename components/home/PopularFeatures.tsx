@@ -9,6 +9,7 @@ import { TagManager } from './TagManager';
 import { MovieGrid } from './MovieGrid';
 import { useTagManager } from './hooks/useTagManager';
 import { usePopularMovies } from './hooks/usePopularMovies';
+import type { DoubanMovie } from './hooks/usePopularMovies';
 
 interface PopularFeaturesProps {
   onSearch?: (query: string) => void;
@@ -42,7 +43,7 @@ export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
     loadMoreRef,
   } = usePopularMovies(selectedTag, tags, contentType);
 
-  const handleMovieClick = (movie: any) => {
+  const handleMovieClick = (movie: DoubanMovie) => {
     if (onSearch) {
       onSearch(movie.title);
     }

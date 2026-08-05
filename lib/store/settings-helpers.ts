@@ -78,7 +78,7 @@ export function importSettings(
                     saveSettings(newSettings);
                     return true;
                 }
-            } catch (e) {
+            } catch {
                 // Not a valid source format either
             }
         }

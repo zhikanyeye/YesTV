@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/Button';
 import { Icons } from '@/components/ui/Icon';
 
 interface VideoPlayerErrorProps {

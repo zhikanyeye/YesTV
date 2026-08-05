@@ -62,17 +62,17 @@ export function useTypeBadges<T extends { type_name?: string }>(videos: T[]) {
   useEffect(() => {
     const availableTypes = new Set(typeBadges.map(b => b.type));
 
-    setSelectedTypes(prev => {
-      const filtered = new Set(
-        Array.from(prev).filter(type => availableTypes.has(type))
-      );
+    const timer = setTimeout(() => {
+      setSelectedTypes(prev => {
+        const filtered = new Set(
+          Array.from(prev).filter(type => availableTypes.has(type))
+        );
 
-      // Only update if changed
-      if (filtered.size !== prev.size) {
-        return filtered;
-      }
-      return prev;
-    });
+        return filtered.size === prev.size ? prev : filtered;
+      });
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [typeBadges]);
 
   return {

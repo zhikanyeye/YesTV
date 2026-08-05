@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { useHistory } from '@/lib/store/history-store';
@@ -29,7 +29,6 @@ export function VideoPlayer({
   totalEpisodes,
   onNextEpisode,
   isReversed = false,
-  isPremium = false
 }: VideoPlayerProps) {
   const [videoError, setVideoError] = useState<string>('');
   const [useProxy, setUseProxy] = useState(false);
@@ -41,29 +40,20 @@ export function VideoPlayer({
   const durationRef = useRef(0);
   const SAVE_INTERVAL = 5000; // 5 seconds throttle
 
-  // Get showModeIndicator setting
-  const [showModeIndicator, setShowModeIndicator] = useState(false);
-  
-  // Get showResolutionIndicator setting
-  const [showResolutionIndicator, setShowResolutionIndicator] = useState(false);
+  const subscribeToSettings = useCallback((listener: () => void) => settingsStore.subscribe(listener), []);
+  const showModeIndicator = useSyncExternalStore(
+    subscribeToSettings,
+    () => settingsStore.getSettings().showModeIndicator,
+    () => false,
+  );
+  const showResolutionIndicator = useSyncExternalStore(
+    subscribeToSettings,
+    () => settingsStore.getSettings().showResolutionIndicator,
+    () => false,
+  );
   
   // Store video resolution
   const [videoResolution, setVideoResolution] = useState<{ width: number; height: number } | null>(null);
-
-  useEffect(() => {
-    // Initial value
-    setShowModeIndicator(settingsStore.getSettings().showModeIndicator);
-    setShowResolutionIndicator(settingsStore.getSettings().showResolutionIndicator);
-
-    // Subscribe to changes
-    const unsubscribe = settingsStore.subscribe(() => {
-      setShowModeIndicator(settingsStore.getSettings().showModeIndicator);
-      setShowResolutionIndicator(settingsStore.getSettings().showResolutionIndicator);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
 
   // Use reactive hook to subscribe to history updates
   // This ensures the component re-renders when history is hydrated from localStorage
@@ -81,11 +71,11 @@ export function VideoPlayer({
     // Directly check HistoryStore for progress
     // We prioritize a strict match (including source), but fall back to any match for this video/episode
     // This fixes issues where the source parameter might be missing or different
-    const historyItem = viewingHistory.find((item: any) =>
+    const historyItem = viewingHistory.find((item) =>
       item.videoId.toString() === videoId?.toString() &&
       item.episodeIndex === currentEpisode &&
       (source ? item.source === source : true)
-    ) || viewingHistory.find((item: any) =>
+    ) || viewingHistory.find((item) =>
       item.videoId.toString() === videoId?.toString() &&
       item.episodeIndex === currentEpisode
     );

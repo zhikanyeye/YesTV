@@ -16,15 +16,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('system');
   const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('dark');
   const [mounted, setMounted] = useState(false);
-  const transitionRef = React.useRef<any>(null);
+  const transitionRef = React.useRef<ViewTransition | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-    // Load saved theme
     const saved = localStorage.getItem('theme') as Theme;
-    if (saved) {
-      setTheme(saved);
-    }
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      setMounted(true);
+      if (saved) setTheme(saved);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -44,7 +48,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (transitionRef.current) {
         try {
           transitionRef.current.skipTransition();
-        } catch (e) {
+        } catch {
           // Ignore if transition already finished
         }
       }
@@ -56,10 +60,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Check if View Transition API is supported
-      // @ts-ignore - View Transition API is experimental
       if (typeof document.startViewTransition === 'function') {
         try {
-          // @ts-ignore
           transitionRef.current = document.startViewTransition(() => {
             applyTheme();
           });
@@ -68,12 +70,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           if (transitionRef.current) {
             transitionRef.current.finished
               .then(() => { transitionRef.current = null; })
-              .catch((error: Error) => { 
+              .catch(() => {
                 // Silently handle transition errors (visibility changes, etc.)
                 transitionRef.current = null;
               });
           }
-        } catch (error) {
+        } catch {
           // Fallback if transition fails to start
           applyTheme();
         }
@@ -99,7 +101,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (document.hidden && transitionRef.current) {
         try {
           transitionRef.current.skipTransition();
-        } catch (e) {
+        } catch {
           // Ignore
         }
         transitionRef.current = null;
@@ -116,7 +118,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       if (transitionRef.current) {
         try {
           transitionRef.current.skipTransition();
-        } catch (e) {
+        } catch {
           // Ignore
         }
       }

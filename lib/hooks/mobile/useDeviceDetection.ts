@@ -10,7 +10,7 @@ export function useIsMobile() {
         const checkMobile = () => {
             const ua = navigator.userAgent || '';
             const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-            const maxTouchPoints = (navigator as any).maxTouchPoints || 0;
+            const maxTouchPoints = navigator.maxTouchPoints || 0;
             const iPadOsDesktopUa = navigator.platform === 'MacIntel' && maxTouchPoints > 1;
             const coarsePointer = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
             const noHover = typeof window.matchMedia === 'function' && window.matchMedia('(hover: none)').matches;
@@ -38,9 +38,9 @@ export function useIsIOS() {
     useEffect(() => {
         const checkIOS = () => {
             const ua = navigator.userAgent || '';
-            const maxTouchPoints = (navigator as any).maxTouchPoints || 0;
+            const maxTouchPoints = navigator.maxTouchPoints || 0;
             const iPadOsDesktopUa = navigator.platform === 'MacIntel' && maxTouchPoints > 1;
-            const ios = (/iPad|iPhone|iPod/.test(ua) || iPadOsDesktopUa) && !(window as any).MSStream;
+            const ios = (/iPad|iPhone|iPod/.test(ua) || iPadOsDesktopUa) && !('MSStream' in window);
             setIsIOS(ios);
         };
 

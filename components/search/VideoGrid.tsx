@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useMemo, memo, useEffect } from 'react';
-import { VideoCard } from './VideoCard';
+import { GroupedVideo, VideoGroupCard } from './VideoGroupCard';
 import { Video } from '@/lib/types';
 
 interface VideoGridProps {
@@ -54,7 +54,7 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
 
     videos.forEach(video => {
       // Normalize title for comparison
-      const normalizedTitle = video.vod_name.toLowerCase().trim();
+      const normalizedTitle = video.vod_name.toLowerCase().replace(/\s+/g, '');
       if (!groups.has(normalizedTitle)) {
         groups.set(normalizedTitle, []);
       }
@@ -64,44 +64,25 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
     return groups;
   }, [videos]);
 
-  const visibleVideoItems = useMemo(() => {
-    return videos.slice(0, visibleCount).map((video, index) => {
-      const absoluteIndex = index;
-      const params: Record<string, string> = {
-        id: String(video.vod_id),
-        source: video.source,
-        title: video.vod_name,
-      };
+  const visibleVideoGroups = useMemo(() => {
+    return Array.from(videoGroups.values())
+      .map((groupVideos): GroupedVideo => {
+        const representative = groupVideos.reduce((best, candidate) => {
+          const bestLatency = best.latency ?? Infinity;
+          const candidateLatency = candidate.latency ?? Infinity;
+          return candidateLatency < bestLatency ? candidate : best;
+        });
 
-      if (isPremium) {
-        params.premium = '1';
-      }
+        return {
+          representative,
+          videos: groupVideos,
+          name: representative.vod_name,
+        };
+      })
+      .slice(0, visibleCount);
+  }, [videoGroups, visibleCount]);
 
-      // Get all sources for this video title (grouped sources)
-      const normalizedTitle = video.vod_name.toLowerCase().trim();
-      const groupedVideos = videoGroups.get(normalizedTitle) || [video];
-      
-      // Only add groupedSources if there are multiple sources for the same video
-      if (groupedVideos.length > 1) {
-        const groupData = groupedVideos.map(v => ({
-          id: v.vod_id,
-          source: v.source,
-          sourceName: v.sourceName,
-          latency: v.latency,
-          pic: v.vod_pic,
-        }));
-        params.groupedSources = JSON.stringify(groupData);
-      }
-
-      const videoUrl = `/player?${new URLSearchParams(params).toString()}`;
-
-      const cardId = `${video.source}-${video.vod_id}-${video.vod_name}`;
-
-      return { video, videoUrl, cardId, absoluteIndex };
-    });
-  }, [videos, visibleCount, videoGroups, isPremium]);
-
-  const totalItems = videos.length;
+  const totalItems = videoGroups.size;
 
   if (videos.length === 0) {
     return null;
@@ -114,17 +95,17 @@ export const VideoGrid = memo(function VideoGrid({ videos, className = '', isPre
         role="list"
         aria-label="视频搜索结果"
       >
-        {visibleVideoItems.map(({ video, videoUrl, cardId, absoluteIndex }) => {
+        {visibleVideoGroups.map((group, index) => {
+          const cardId = `${group.representative.source}-${group.representative.vod_id}-${group.name}`;
           const isActive = activeCardId === cardId;
           return (
-            <VideoCard
+            <VideoGroupCard
               key={cardId}
-              video={video}
-              videoUrl={videoUrl}
+              group={group}
               cardId={cardId}
               isActive={isActive}
               onCardClick={handleCardClick}
-              imagePriority={absoluteIndex < 6}
+              imagePriority={index < 6}
               isPremium={isPremium}
             />
           );

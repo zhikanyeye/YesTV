@@ -6,7 +6,6 @@
 'use client';
 
 import { memo, useCallback, useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useFavorites } from '@/lib/store/favorites-store';
 import { Icons } from '@/components/ui/Icon';
 
@@ -37,7 +36,6 @@ export const FavoriteButton = memo<FavoriteButtonProps>(({
     className = '',
     size = 20,
     showTooltip = true,
-    isPremium = false,
 }) => {
     const { isFavorite, toggleFavorite } = useFavorites();
     const [isAnimating, setIsAnimating] = useState(false);

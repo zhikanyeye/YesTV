@@ -3,7 +3,7 @@
  * Periodically pings video sources when enabled
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { settingsStore } from '@/lib/store/settings-store';
 
 interface LatencyState {
@@ -27,18 +27,13 @@ export function useLatencyPing({
     const mountedRef = useRef(true);
 
     // Check if real-time latency is enabled in settings
-    const [realtimeEnabled, setRealtimeEnabled] = useState(false);
+    const [realtimeEnabled, setRealtimeEnabled] = useState(
+        () => settingsStore.getSettings().realtimeLatency
+    );
 
-    // Stabilize sourceUrls to prevent unnecessary effect re-runs if parent passes new array
-    const stableSourceUrls = useMemo(() => sourceUrls, [
-        // Create a unique key for the sources array
-        sourceUrls.map(s => `${s.id}|${s.baseUrl}`).join(',')
-    ]);
+    const stableSourceUrls = sourceUrls;
 
     useEffect(() => {
-        const settings = settingsStore.getSettings();
-        setRealtimeEnabled(settings.realtimeLatency);
-
         // Subscribe to settings changes
         const unsubscribe = settingsStore.subscribe(() => {
             const newSettings = settingsStore.getSettings();
@@ -101,11 +96,19 @@ export function useLatencyPing({
         const shouldPoll = enabled && realtimeEnabled && stableSourceUrls.length > 0;
 
         if (shouldPoll) {
-            // Initial ping
-            pingAllSources();
+            const initialPingTimeout = setTimeout(pingAllSources, 0);
 
             // Set up interval
             intervalRef.current = setInterval(pingAllSources, intervalMs);
+
+            return () => {
+                clearTimeout(initialPingTimeout);
+                mountedRef.current = false;
+                if (intervalRef.current) {
+                    clearInterval(intervalRef.current);
+                    intervalRef.current = null;
+                }
+            };
         }
 
         return () => {

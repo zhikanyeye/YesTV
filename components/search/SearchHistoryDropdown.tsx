@@ -7,9 +7,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { Icons } from '@/components/ui/Icon';
 import type { SearchHistoryItem } from '@/lib/store/search-history-store';
-import { SearchHistoryEmptyState } from './SearchHistoryEmptyState';
 import { SearchHistoryHeader } from './SearchHistoryHeader';
 import { SearchHistoryListItem } from './SearchHistoryListItem';
 
@@ -27,7 +25,6 @@ export function SearchHistoryDropdown({
   isOpen,
   searchHistory,
   highlightedIndex,
-  triggerRef,
   onSelectItem,
   onRemoveItem,
   onClearAll,

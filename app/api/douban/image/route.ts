@@ -45,16 +45,14 @@ export async function GET(request: Request) {
         headers.set('Cache-Control', 'public, max-age=15720000, s-maxage=15720000');
 
         // 直接返回图片流
-        // @ts-ignore
         return new Response(imageResponse.body, {
             status: 200,
             headers,
         });
-    } catch (error) {
+    } catch {
         return NextResponse.json(
             { error: 'Error fetching image' },
             { status: 500 }
         );
     }
 }
-

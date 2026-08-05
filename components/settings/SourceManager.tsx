@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import type { VideoSource } from '@/lib/types';
 
 interface SourceManagerProps {
@@ -20,8 +19,6 @@ export function SourceManager({
   onEdit,
   defaultIds
 }: SourceManagerProps) {
-  const [editingId, setEditingId] = useState<string | null>(null);
-
   const handleToggle = (id: string) => {
     onToggle(id);
   };

@@ -4,34 +4,20 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { VideoSource } from '@/lib/types';
 
 interface UseAddSourceFormProps {
-    isOpen: boolean;
     existingIds: string[];
     onAdd: (source: VideoSource) => void;
     onClose: () => void;
     initialValues?: VideoSource | null;
 }
 
-export function useAddSourceForm({ isOpen, existingIds, onAdd, onClose, initialValues }: UseAddSourceFormProps) {
-    const [name, setName] = useState('');
-    const [url, setUrl] = useState('');
+export function useAddSourceForm({ existingIds, onAdd, onClose, initialValues }: UseAddSourceFormProps) {
+    const [name, setName] = useState(initialValues?.name || '');
+    const [url, setUrl] = useState(initialValues?.baseUrl || '');
     const [error, setError] = useState('');
-
-    useEffect(() => {
-        if (isOpen) {
-            if (initialValues) {
-                setName(initialValues.name);
-                setUrl(initialValues.baseUrl);
-            } else {
-                setName('');
-                setUrl('');
-            }
-            setError('');
-        }
-    }, [isOpen, initialValues]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

@@ -11,7 +11,7 @@ import { getSourceById } from '@/lib/api/video-sources';
 /**
  * Shared handler for fetching video details
  */
-async function handleDetailRequest(id: string | null, source: string | null, method: string) {
+async function handleDetailRequest(id: string | null, source: string | null) {
   // Validate input
   if (!id) {
     return NextResponse.json(
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get('id');
     const source = searchParams.get('source');
 
-    return await handleDetailRequest(id, source, 'GET');
+    return await handleDetailRequest(id, source);
   } catch (error) {
     console.error('Detail API error:', error);
 
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { id, source } = body;
 
-    return await handleDetailRequest(id, source, 'POST');
+    return await handleDetailRequest(id, source);
   } catch (error) {
     console.error('Detail API error:', error);
 
@@ -109,4 +109,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

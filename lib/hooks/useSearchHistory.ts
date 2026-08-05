@@ -26,7 +26,6 @@ export function useSearchHistory(
   onSelectHistory?: (query: string) => void
 ): UseSearchHistoryReturn {
   const {
-    searchHistory,
     addToSearchHistory,
     removeFromSearchHistory,
     clearSearchHistory,

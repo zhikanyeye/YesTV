@@ -133,11 +133,11 @@ export function MobileVideoPlayer({
     return () => window.clearInterval(id);
   }, [isSkipModeActive]);
 
-  const clampSeek = (t: number) => {
+  const clampSeek = React.useCallback((t: number) => {
     const d = videoRef.current?.duration || duration;
     if (!isFinite(d) || d <= 0) return Math.max(0, t);
     return Math.min(Math.max(0, t), Math.max(0, d - 0.5));
-  };
+  }, [duration]);
 
   const skipBy = React.useCallback((deltaSeconds: number) => {
     const video = videoRef.current;
@@ -155,7 +155,7 @@ export function MobileVideoPlayer({
       setShowSkipForward(true);
       setShowSkipBackward(false);
     }
-  }, [setSkipMode]);
+  }, [clampSeek, setSkipMode]);
 
   const { handleTap } = useDoubleTap({
     onDoubleTapLeft: () => skipBy(-10),
@@ -213,7 +213,7 @@ export function MobileVideoPlayer({
     if (!video) return;
 
     const onFsChange = () => {
-      const doc: any = document;
+      const doc = document as Document & { webkitFullscreenElement?: Element | null };
       const el = doc.fullscreenElement || doc.webkitFullscreenElement;
       setIsFullscreen(!!el);
     };
@@ -221,15 +221,15 @@ export function MobileVideoPlayer({
     const onWebkitEnd = () => setIsFullscreen(false);
 
     document.addEventListener('fullscreenchange', onFsChange);
-    document.addEventListener('webkitfullscreenchange', onFsChange as any);
-    video.addEventListener('webkitbeginfullscreen', onWebkitBegin as any);
-    video.addEventListener('webkitendfullscreen', onWebkitEnd as any);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    video.addEventListener('webkitbeginfullscreen', onWebkitBegin);
+    video.addEventListener('webkitendfullscreen', onWebkitEnd);
 
     return () => {
       document.removeEventListener('fullscreenchange', onFsChange);
-      document.removeEventListener('webkitfullscreenchange', onFsChange as any);
-      video.removeEventListener('webkitbeginfullscreen', onWebkitBegin as any);
-      video.removeEventListener('webkitendfullscreen', onWebkitEnd as any);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+      video.removeEventListener('webkitbeginfullscreen', onWebkitBegin);
+      video.removeEventListener('webkitendfullscreen', onWebkitEnd);
     };
   }, [src]);
 

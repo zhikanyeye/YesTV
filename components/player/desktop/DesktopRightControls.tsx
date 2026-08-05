@@ -8,7 +8,6 @@ interface DesktopRightControlsProps {
     isPiPSupported: boolean;
     isAirPlaySupported: boolean;
     isCastAvailable: boolean;
-    isProxied?: boolean;
     onToggleFullscreen: () => void;
     onTogglePictureInPicture: () => void;
     onShowAirPlayMenu: () => void;
@@ -20,7 +19,6 @@ export function DesktopRightControls({
     isPiPSupported,
     isAirPlaySupported,
     isCastAvailable,
-    isProxied,
     onToggleFullscreen,
     onTogglePictureInPicture,
     onShowAirPlayMenu,

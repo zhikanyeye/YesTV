@@ -3,10 +3,14 @@
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Icons } from '@/components/ui/Icon';
+import Image from 'next/image';
 import { getSourceName } from '@/lib/utils/source-names';
+import type { VideoItem } from '@/lib/types';
+
+type VideoMetadataData = Pick<VideoItem, 'vod_name' | 'vod_pic' | 'vod_content' | 'vod_actor' | 'vod_director' | 'vod_year' | 'vod_area' | 'type_name'>;
 
 interface VideoMetadataProps {
-  videoData: any;
+  videoData: VideoMetadataData | null;
   source: string | null;
   title?: string | null;
 }
@@ -16,9 +20,12 @@ export function VideoMetadata({ videoData, source, title }: VideoMetadataProps) 
     <Card hover={false}>
       <div className="flex flex-col sm:flex-row items-start gap-4">
         {videoData?.vod_pic && (
-          <img
+          <Image
             src={videoData.vod_pic}
             alt={videoData.vod_name}
+            width={128}
+            height={192}
+            unoptimized
             className="w-24 h-36 sm:w-32 sm:h-48 object-cover rounded-[var(--radius-2xl)] border border-[var(--glass-border)]"
           />
         )}

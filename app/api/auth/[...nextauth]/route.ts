@@ -1,6 +1,16 @@
 import NextAuth, { AuthOptions } from "next-auth";
+import type { UserinfoEndpointHandler } from "next-auth/providers/oauth";
 import GithubProvider from "next-auth/providers/github";
 import { isUserBanned, upsertManagedUser } from '@/lib/user-management';
+
+interface QQProfile {
+  id: string;
+  nickname: string;
+  figureurl_qq_1?: string;
+  figureurl_qq_2?: string;
+}
+
+type QQRequestContext = Parameters<NonNullable<UserinfoEndpointHandler["request"]>>[0];
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -22,16 +32,17 @@ export const authOptions: AuthOptions = {
       },
       userinfo: {
         url: "https://graph.qq.com/oauth2.0/me",
-        async request(context: any) {
-          const me = await fetch(context.token.userinfo.url + "?access_token=" + context.token.access_token);
-          let openid = await me.text();
-          openid = JSON.parse(openid.replace(/callback\(|\);/g, '')).openid;
-          const user = await fetch(`https://graph.qq.com/user/get_user_info?access_token=${context.token.access_token}&oauth_consumer_key=${context.provider.clientId}&openid=${openid}`);
-          const qqUser = await user.json();
-          return { ...qqUser, id: openid };
+        async request(context: QQRequestContext) {
+          const accessToken = context.tokens.access_token as string;
+          const me = await fetch(`https://graph.qq.com/oauth2.0/me?access_token=${accessToken}`);
+          const responseText = await me.text();
+          const { openid } = JSON.parse(responseText.replace(/callback\(|\);/g, '')) as { openid: string };
+          const user = await fetch(`https://graph.qq.com/user/get_user_info?access_token=${accessToken}&oauth_consumer_key=${context.provider.clientId}&openid=${openid}`);
+          const qqUser = await user.json() as QQProfile;
+          return { ...qqUser, id: openid, name: qqUser.nickname };
         }
       },
-      profile(profile: any) {
+      profile(profile: QQProfile) {
         return {
           id: profile.id,
           name: profile.nickname,

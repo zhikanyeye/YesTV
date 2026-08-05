@@ -13,16 +13,17 @@ interface AddSourceModalProps {
   initialValues?: VideoSource | null;
 }
 
-export function AddSourceModal({ isOpen, onClose, onAdd, existingIds, initialValues }: AddSourceModalProps) {
+export function AddSourceModal(props: AddSourceModalProps) {
+  return props.isOpen ? <AddSourceModalContent {...props} /> : null;
+}
+
+function AddSourceModalContent({ isOpen, onClose, onAdd, existingIds, initialValues }: AddSourceModalProps) {
   const { name, setName, url, setUrl, error, handleSubmit } = useAddSourceForm({
-    isOpen,
     existingIds,
     onAdd,
     onClose,
     initialValues,
   });
-
-  if (!isOpen) return null;
 
   return (
     <>

@@ -17,7 +17,7 @@ export function useProgressControls({
 }: UseProgressControlsProps) {
     const lastDragTimeRef = useRef<number>(0);
 
-    const handleProgressClick = useCallback((e: any) => {
+    const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         if (!videoRef.current || !progressBarRef.current) return;
         const rect = progressBarRef.current.getBoundingClientRect();
         const pos = (e.clientX - rect.left) / rect.width;
@@ -27,13 +27,13 @@ export function useProgressControls({
         setCurrentTime(newTime);
     }, [videoRef, progressBarRef, duration, setCurrentTime]);
 
-    const handleProgressMouseDown = useCallback((e: any) => {
+    const handleProgressMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         e.preventDefault();
         isDraggingProgressRef.current = true;
         handleProgressClick(e);
     }, [isDraggingProgressRef, handleProgressClick]);
 
-    const handleProgressTouchStart = useCallback((e: any) => {
+    const handleProgressTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
         // e.preventDefault(); // Do not prevent default immediately to allow scrolling if needed, or check logic
         // But for a slider, we usually want to capture the drag.
         e.preventDefault();

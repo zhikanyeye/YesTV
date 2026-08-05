@@ -1,19 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { settingsStore, getDefaultPremiumSources, type SortOption } from '@/lib/store/settings-store';
 import type { VideoSource } from '@/lib/types';
 
 export function usePremiumSettingsPage() {
-    const [premiumSources, setPremiumSources] = useState<VideoSource[]>([]);
-    const [sortBy, setSortBy] = useState<SortOption>('default');
+    const [premiumSources, setPremiumSources] = useState<VideoSource[]>(() => settingsStore.getSettings().premiumSources || []);
+    const [sortBy] = useState<SortOption>(() => settingsStore.getSettings().sortBy);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isRestoreDefaultsDialogOpen, setIsRestoreDefaultsDialogOpen] = useState(false);
     const [editingSource, setEditingSource] = useState<VideoSource | null>(null);
-
-    useEffect(() => {
-        const settings = settingsStore.getSettings();
-        setPremiumSources(settings.premiumSources || []);
-        setSortBy(settings.sortBy);
-    }, []);
 
     const handleSourcesChange = (newSources: VideoSource[]) => {
         setPremiumSources(newSources);

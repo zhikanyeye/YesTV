@@ -18,7 +18,6 @@ export function TypeBadgeItem({
   count,
   isSelected,
   onToggle,
-  isFocused = false,
   onFocus,
   innerRef,
 }: TypeBadgeItemProps) {

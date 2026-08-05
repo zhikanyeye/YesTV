@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+
 /**
  * PosterImage - Video poster with fallback handling
  */

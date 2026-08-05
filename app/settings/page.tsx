@@ -1,6 +1,5 @@
 'use client';
 
-import { Suspense } from 'react';
 import { AddSourceModal } from '@/components/settings/AddSourceModal';
 import { ExportModal } from '@/components/settings/ExportModal';
 import { ImportModal } from '@/components/settings/ImportModal';
@@ -170,4 +169,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

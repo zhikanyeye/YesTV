@@ -11,7 +11,7 @@ interface DesktopControlsWrapperProps {
     refs: ReturnType<typeof useDesktopPlayerState>['refs'];
 }
 
-export function DesktopControlsWrapper({ src, data, actions, logic, refs }: DesktopControlsWrapperProps) {
+export function DesktopControlsWrapper({ src, data, logic, refs }: DesktopControlsWrapperProps) {
     const {
         isPlaying,
         currentTime,

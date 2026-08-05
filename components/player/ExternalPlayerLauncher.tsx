@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ModalBackdrop } from '@/components/ui/ModalBackdrop';
@@ -21,7 +21,7 @@ interface PlayerOption {
 function detectPlatform(): Platform {
   if (typeof navigator === 'undefined') return 'unknown';
   const ua = navigator.userAgent || '';
-  const maxTouchPoints = (navigator as any).maxTouchPoints || 0;
+  const maxTouchPoints = navigator.maxTouchPoints || 0;
   const iPadOsDesktopUa = navigator.platform === 'MacIntel' && maxTouchPoints > 1;
 
   if (iPadOsDesktopUa || /iPad|iPhone|iPod/i.test(ua)) return 'ios';
@@ -71,8 +71,7 @@ async function copyToClipboard(text: string): Promise<boolean> {
 
 export function ExternalPlayerLauncher({ url, title }: { url: string; title?: string }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
-  const statusTimeoutRef = useRef<number | null>(null);
+  const [status, setStatus] = useState<{ message: string; id: number } | null>(null);
 
   const platform = useMemo(() => detectPlatform(), []);
 
@@ -82,23 +81,18 @@ export function ExternalPlayerLauncher({ url, title }: { url: string; title?: st
   }, [url]);
 
   useEffect(() => {
-    return () => {
-      if (statusTimeoutRef.current) {
-        window.clearTimeout(statusTimeoutRef.current);
-      }
-    };
-  }, []);
+    if (!status) return;
+
+    const timeoutId = window.setTimeout(() => setStatus(null), 2000);
+    return () => window.clearTimeout(timeoutId);
+  }, [status]);
 
   const setStatusWithTimeout = (message: string) => {
-    setStatus(message);
-    if (statusTimeoutRef.current) {
-      window.clearTimeout(statusTimeoutRef.current);
-    }
-    statusTimeoutRef.current = window.setTimeout(() => setStatus(null), 2000);
+    setStatus({ message, id: Date.now() });
   };
 
   const openHref = (href: string) => {
-    window.location.href = href;
+    window.location.assign(href);
   };
 
   const options = useMemo<PlayerOption[]>(() => {
@@ -227,7 +221,7 @@ export function ExternalPlayerLauncher({ url, title }: { url: string; title?: st
             {status && (
               <div className="mb-4 px-4 py-2 rounded-[var(--radius-2xl)] bg-[color-mix(in_srgb,var(--accent-color)_12%,transparent)] text-sm text-[var(--text-color)] flex items-center gap-2">
                 <Icons.Check size={18} className="text-[var(--accent-color)]" />
-                <span>{status}</span>
+                <span>{status.message}</span>
               </div>
             )}
 

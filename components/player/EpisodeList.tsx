@@ -1,11 +1,10 @@
 'use client';
 
-import { useRef, useCallback, useState, useMemo } from 'react';
+import { useRef, useCallback, useMemo } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Icons } from '@/components/ui/Icon';
 import { useKeyboardNavigation } from '@/lib/hooks/useKeyboardNavigation';
-import { settingsStore } from '@/lib/store/settings-store';
 
 interface Episode {
   name?: string;

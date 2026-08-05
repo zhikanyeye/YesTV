@@ -9,7 +9,6 @@ interface DesktopSpeedMenuProps {
     onToggleSpeedMenu: () => void;
     onMouseEnter: () => void;
     onMouseLeave: () => void;
-    containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function DesktopSpeedMenu({
@@ -20,31 +19,28 @@ export function DesktopSpeedMenu({
     onToggleSpeedMenu,
     onMouseEnter,
     onMouseLeave,
-    containerRef
 }: DesktopSpeedMenuProps) {
     const buttonRef = React.useRef<HTMLButtonElement>(null);
     const [menuPosition, setMenuPosition] = React.useState({ top: 0, left: 0 });
 
     React.useEffect(() => {
-        if (showSpeedMenu && buttonRef.current && containerRef.current) {
+        if (showSpeedMenu && buttonRef.current) {
             const buttonRect = buttonRef.current.getBoundingClientRect();
-            const containerRect = containerRef.current.getBoundingClientRect();
 
             setMenuPosition({
-                top: buttonRect.bottom - containerRect.top + 10,
-                left: buttonRect.right - containerRect.left
+                top: buttonRect.bottom + 10,
+                left: buttonRect.right
             });
         }
-    }, [showSpeedMenu, containerRef]);
+    }, [showSpeedMenu]);
 
     const handleToggle = () => {
-        if (!showSpeedMenu && buttonRef.current && containerRef.current) {
+        if (!showSpeedMenu && buttonRef.current) {
             const buttonRect = buttonRef.current.getBoundingClientRect();
-            const containerRect = containerRef.current.getBoundingClientRect();
 
             setMenuPosition({
-                top: buttonRect.bottom - containerRect.top + 10,
-                left: buttonRect.right - containerRect.left
+                top: buttonRect.bottom + 10,
+                left: buttonRect.right
             });
         }
         onToggleSpeedMenu();
@@ -53,7 +49,7 @@ export function DesktopSpeedMenu({
 
     const MenuContent = (
         <div
-            className="absolute z-[9999] bg-[var(--glass-bg)] backdrop-blur-[25px] saturate-[180%] rounded-[var(--radius-2xl)] border border-[var(--glass-border)] shadow-[var(--shadow-md)] p-1.5 w-fit min-w-[4.5rem]"
+            className="fixed z-[9999] bg-[var(--glass-bg)] backdrop-blur-[25px] saturate-[180%] rounded-[var(--radius-2xl)] border border-[var(--glass-border)] shadow-[var(--shadow-md)] p-1.5 w-fit min-w-[4.5rem]"
             style={{
                 top: menuPosition.top,
                 left: menuPosition.left,
@@ -91,7 +87,7 @@ export function DesktopSpeedMenu({
             </button>
 
             {/* Speed Menu (Portal) */}
-            {showSpeedMenu && typeof document !== 'undefined' && createPortal(MenuContent, containerRef.current || document.body)}
+            {showSpeedMenu && typeof document !== 'undefined' && createPortal(MenuContent, document.body)}
         </div>
     );
 }

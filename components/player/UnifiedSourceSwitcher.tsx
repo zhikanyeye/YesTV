@@ -44,7 +44,6 @@ interface UnifiedSourceSwitcherProps {
 
 export function UnifiedSourceSwitcher({
     groupedSources = [],
-    videoId,
     videoTitle,
     currentSource,
     isPremium = false,
@@ -53,7 +52,6 @@ export function UnifiedSourceSwitcher({
 }: UnifiedSourceSwitcherProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [isLoading, setIsLoading] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
     const [latencies, setLatencies] = useState<Record<string, number>>({});
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -61,9 +59,6 @@ export function UnifiedSourceSwitcher({
     const [hasSearched, setHasSearched] = useState(false);
     const [usingCache, setUsingCache] = useState(false);
     const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-
-    // Get current episode to preserve when switching
-    const currentEpisode = searchParams.get('episode') || '0';
 
     // Determine if we have pre-grouped sources
     const hasGroupedSources = groupedSources.length > 0;
@@ -124,8 +119,6 @@ export function UnifiedSourceSwitcher({
     const refreshLatencies = useCallback(async () => {
         if (!hasGroupedSources) return;
         
-        setIsLoading(true);
-
         const results = await Promise.all(
             groupedSources.map(async (source) => {
                 try {
@@ -156,7 +149,6 @@ export function UnifiedSourceSwitcher({
         });
 
         setLatencies(newLatencies);
-        setIsLoading(false);
     }, [groupedSources, hasGroupedSources]);
 
     useEffect(() => {

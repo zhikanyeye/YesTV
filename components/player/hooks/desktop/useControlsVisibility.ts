@@ -20,7 +20,6 @@ export function useControlsVisibility({
     showMoreMenu,
     setShowControls,
     setShowSpeedMenu,
-    setShowMoreMenu,
     controlsTimeoutRef,
     speedMenuTimeoutRef,
     mouseMoveThrottleRef
@@ -65,7 +64,7 @@ export function useControlsVisibility({
                 clearTimeout(controlsTimeoutRef.current);
             }
         };
-    }, [isPlaying, showSpeedMenu, setShowControls, controlsTimeoutRef]);
+    }, [isPlaying, showSpeedMenu, showMoreMenu, hideControls, controlsTimeoutRef]);
 
     const handleMouseMove = useCallback(() => {
         if (mouseMoveThrottleRef.current) return;

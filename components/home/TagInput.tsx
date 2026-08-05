@@ -1,6 +1,5 @@
 'use client';
 
-import { Icons } from '@/components/ui/Icon';
 
 interface TagInputProps {
     newTagInput: string;

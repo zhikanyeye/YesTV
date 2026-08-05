@@ -4,6 +4,7 @@ import { TagManager } from '@/components/home/TagManager';
 import { PremiumContentGrid } from './PremiumContentGrid';
 import { usePremiumTagManager } from '@/lib/hooks/usePremiumTagManager';
 import { usePremiumContent } from '@/lib/hooks/usePremiumContent';
+import type { Video } from '@/lib/types';
 
 interface PremiumContentProps {
     onSearch?: (query: string) => void;
@@ -37,7 +38,7 @@ export function PremiumContent({ onSearch }: PremiumContentProps) {
         loadMoreRef,
     } = usePremiumContent(categoryValue);
 
-    const handleVideoClick = (video: any) => {
+    const handleVideoClick = (video: Video) => {
         if (onSearch) {
             onSearch(video.vod_name);
         }

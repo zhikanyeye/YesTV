@@ -34,7 +34,6 @@ interface DesktopOverlayProps {
     onSpeedChange: (speed: number) => void;
     onSpeedMenuMouseEnter: () => void;
     onSpeedMenuMouseLeave: () => void;
-    containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function DesktopOverlay({
@@ -66,7 +65,6 @@ export function DesktopOverlay({
     onSpeedChange,
     onSpeedMenuMouseEnter,
     onSpeedMenuMouseLeave,
-    containerRef,
 }: DesktopOverlayProps) {
     // Show navigation buttons when controls are visible or when paused (controls usually show when paused anyway)
     const showNavButtons = showControls || !isPlaying;
@@ -82,7 +80,6 @@ export function DesktopOverlay({
                     onMouseEnter={onMoreMenuMouseEnter}
                     onMouseLeave={onMoreMenuMouseLeave}
                     onCopyLink={onCopyLink}
-                    containerRef={containerRef}
                 />
             </div>
 
@@ -96,7 +93,6 @@ export function DesktopOverlay({
                     onToggleSpeedMenu={onToggleSpeedMenu}
                     onMouseEnter={onSpeedMenuMouseEnter}
                     onMouseLeave={onSpeedMenuMouseLeave}
-                    containerRef={containerRef}
                 />
             </div>
 

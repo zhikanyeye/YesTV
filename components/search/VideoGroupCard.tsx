@@ -30,6 +30,7 @@ interface VideoGroupCardProps {
     cardId: string;
     isActive: boolean;
     onCardClick: (e: React.MouseEvent, cardId: string, videoUrl: string) => void;
+    imagePriority?: boolean;
     isPremium?: boolean;
 }
 
@@ -38,6 +39,7 @@ export const VideoGroupCard = memo<VideoGroupCardProps>(({
     cardId,
     isActive,
     onCardClick,
+    imagePriority = false,
     isPremium = false
 }) => {
     const { representative, videos, name } = group;
@@ -68,8 +70,12 @@ export const VideoGroupCard = memo<VideoGroupCardProps>(({
             params.set('groupedSources', JSON.stringify(groupData));
         }
 
+        if (isPremium) {
+            params.set('premium', '1');
+        }
+
         return `/player?${params.toString()}`;
-    }, [representative, videos]);
+    }, [representative, videos, isPremium]);
 
     return (
         <div
@@ -106,7 +112,8 @@ export const VideoGroupCard = memo<VideoGroupCardProps>(({
                                 fill
                                 className="object-cover rounded-[var(--radius-2xl)]"
                                 sizes="(max-width: 640px) 33vw, (max-width: 1024px) 20vw, 16vw"
-                                loading="eager"
+                                priority={imagePriority}
+                                loading={imagePriority ? 'eager' : 'lazy'}
                                 unoptimized
                                 referrerPolicy="no-referrer"
                                 onError={(e) => {

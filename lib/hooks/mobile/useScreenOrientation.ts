@@ -1,5 +1,11 @@
 import { useEffect } from 'react';
 
+declare global {
+    interface ScreenOrientation {
+        lock?: (orientation: string) => Promise<void>;
+    }
+}
+
 /**
  * Hook for managing screen orientation on mobile devices
  * Auto-rotates to landscape on fullscreen, portrait on exit
@@ -10,13 +16,13 @@ export function useScreenOrientation(isFullscreen: boolean) {
 
         const handleOrientation = async () => {
             try {
-                const screen = window.screen as any;
+                const screen = window.screen;
 
                 if (isFullscreen) {
                     // Fullscreen: Lock to landscape
                     if (screen.orientation?.lock) {
-                        await screen.orientation.lock('landscape').catch((err: any) => {
-                            console.warn('Could not lock orientation:', err);
+                        await screen.orientation.lock('landscape').catch((error: unknown) => {
+                            console.warn('Could not lock orientation:', error);
                         });
                     }
                 } else {
@@ -35,11 +41,11 @@ export function useScreenOrientation(isFullscreen: boolean) {
         // Cleanup: Always unlock on unmount
         return () => {
             try {
-                const screen = window.screen as any;
+                const screen = window.screen;
                 if (screen.orientation?.unlock) {
                     screen.orientation.unlock();
                 }
-            } catch (error) {
+            } catch {
                 // Ignore cleanup errors
             }
         };

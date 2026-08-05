@@ -44,7 +44,7 @@ export function useVolumeControls({
         }, 1000);
     }, [setShowVolumeBar, volumeBarTimeoutRef]);
 
-    const handleVolumeChange = useCallback((e: any) => {
+    const handleVolumeChange = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         if (!videoRef.current || !volumeBarRef.current) return;
         const rect = volumeBarRef.current.getBoundingClientRect();
         const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
@@ -53,7 +53,7 @@ export function useVolumeControls({
         setIsMuted(pos === 0);
     }, [videoRef, volumeBarRef, setVolume, setIsMuted]);
 
-    const handleVolumeMouseDown = useCallback((e: any) => {
+    const handleVolumeMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         e.preventDefault();
         isDraggingVolumeRef.current = true;
         handleVolumeChange(e);

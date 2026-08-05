@@ -16,7 +16,6 @@ export function PasswordGate({ children, hasEnvPassword: initialHasEnvPassword }
     const [error, setError] = useState(false);
     const [isClient, setIsClient] = useState(false);
     const [hasEnvPassword, setHasEnvPassword] = useState(initialHasEnvPassword);
-    const [isValidating, setIsValidating] = useState(false);
 
     useEffect(() => {
         let mounted = true;
@@ -95,8 +94,6 @@ export function PasswordGate({ children, hasEnvPassword: initialHasEnvPassword }
 
     const handleUnlock = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsValidating(true);
-
         const settings = settingsStore.getSettings();
 
         // First check local passwords
@@ -104,7 +101,6 @@ export function PasswordGate({ children, hasEnvPassword: initialHasEnvPassword }
             sessionStorage.setItem(SESSION_UNLOCKED_KEY, 'true');
             setIsLocked(false);
             setError(false);
-            setIsValidating(false);
             return;
         }
 
@@ -121,7 +117,6 @@ export function PasswordGate({ children, hasEnvPassword: initialHasEnvPassword }
                     sessionStorage.setItem(SESSION_UNLOCKED_KEY, 'true');
                     setIsLocked(false);
                     setError(false);
-                    setIsValidating(false);
                     return;
                 }
             } catch {
@@ -131,7 +126,6 @@ export function PasswordGate({ children, hasEnvPassword: initialHasEnvPassword }
 
         // Password didn't match
         setError(true);
-        setIsValidating(false);
         const form = document.getElementById('password-form');
         form?.classList.add('animate-shake');
         setTimeout(() => form?.classList.remove('animate-shake'), 500);
