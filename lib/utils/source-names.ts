@@ -49,14 +49,13 @@ export function getSourceName(sourceId: string): string {
     'baidu': '百度资源',
     'uku': 'uku资源',
     'uku88': 'uku资源(uku88)',
-    'iqiyi': 'iqiyi资源',
+    'iqiyi': '爱奇艺资源',
     'hhzy': '欢欢资源',
     'moduapi': '魔都资源(moduapi)',
     'hongniuzy3': '红牛资源',
     'hongniuzy4': '红牛资源',
-    'ffzy3': '非凡影视',
-    'ffzy5': '非凡影视',
-    'ffzytv': '非凡影视',
+    'haohua': '豪华资源',
+    'yinghua': '樱花资源',
     'liangzi': '量子资源',
   };
   return sourceNames[sourceId] || sourceId;
@@ -71,6 +70,6 @@ export const SOURCE_IDS = [
   'feifan', 'aidan', 'feifanapi', 'feifancj', 'feifancj2', 'feifan1',
   'moduzy', 'leba', 'ffzy', 'zitv', 'maoyan', 'baidu', 'uku', 'uku88', 'iqiyi',
   'xigua', '360zy', 'dazhong', '98zy', 'hhzy', 'moduapi', 'hongniuzy3', 'hongniuzy4',
-  'ffzy3', 'ffzy5', 'ffzytv',
+  'haohua', 'yinghua',
   'p2100', 'liangzi',
 ];

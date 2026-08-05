@@ -16,7 +16,7 @@ export const DEFAULT_SOURCES: VideoSource[] = [
   {
     id: 'ffzy',
     name: '非凡资源',
-    baseUrl: 'https://cj.ffzyapi.com',
+    baseUrl: 'http://ffzy3.tv',
     searchPath: '/api.php/provide/vod/',
     detailPath: '/api.php/provide/vod/',
     enabled: true,
