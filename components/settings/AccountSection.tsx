@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { SettingsSection } from './SettingsSection';
 import { Button } from '@/components/ui/Button';
+import { useAuthProviders } from '@/components/auth/useAuthProviders';
 
 interface AccountState {
   loggedIn: boolean;
@@ -23,6 +24,7 @@ export function AccountSection() {
   const { data: session, status } = useSession();
   const [account, setAccount] = useState<AccountState | null>(null);
   const [loading, setLoading] = useState(false);
+  const { isLoading: isLoadingProviders, githubEnabled, qqEnabled } = useAuthProviders();
 
   useEffect(() => {
     let ignore = false;
@@ -74,12 +76,19 @@ export function AccountSection() {
         <div className="space-y-4">
           <p className="text-sm text-[var(--text-color-secondary)]">当前未登录。登录后可启用云端同步。</p>
           <div className="flex gap-3 flex-wrap">
-            <Button variant="secondary" onClick={() => signIn('github')}>
-              使用 GitHub 登录
-            </Button>
-            <Button variant="secondary" onClick={() => signIn('qq')}>
-              使用 QQ 登录
-            </Button>
+            {githubEnabled && (
+              <Button variant="secondary" onClick={() => signIn('github')}>
+                使用 GitHub 登录
+              </Button>
+            )}
+            {qqEnabled && (
+              <Button variant="secondary" onClick={() => signIn('qq')}>
+                使用 QQ 登录
+              </Button>
+            )}
+            {!isLoadingProviders && !githubEnabled && !qqEnabled && (
+              <p className="text-sm text-[var(--text-color-secondary)]">登录服务尚未配置。</p>
+            )}
           </div>
         </div>
       ) : (

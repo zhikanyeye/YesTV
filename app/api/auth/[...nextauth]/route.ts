@@ -12,16 +12,23 @@ interface QQProfile {
 
 type QQRequestContext = Parameters<NonNullable<UserinfoEndpointHandler["request"]>>[0];
 
+const githubClientId = process.env.GITHUB_CLIENT_ID;
+const githubClientSecret = process.env.GITHUB_CLIENT_SECRET;
+const qqClientId = process.env.QQ_APP_ID;
+const qqClientSecret = process.env.QQ_APP_KEY;
+
 export const authOptions: AuthOptions = {
   providers: [
-    GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    }),
-    {
+    ...(githubClientId && githubClientSecret
+      ? [GithubProvider({
+          clientId: githubClientId,
+          clientSecret: githubClientSecret,
+        })]
+      : []),
+    ...(qqClientId && qqClientSecret ? [{
       id: "qq",
       name: "QQ",
-      type: "oauth",
+      type: "oauth" as const,
       version: "2.0",
       authorization: {
         url: "https://graph.qq.com/oauth2.0/authorize",
@@ -50,9 +57,9 @@ export const authOptions: AuthOptions = {
           image: profile.figureurl_qq_2 || profile.figureurl_qq_1,
         };
       },
-      clientId: process.env.QQ_APP_ID!,
-      clientSecret: process.env.QQ_APP_KEY!,
-    },
+      clientId: qqClientId,
+      clientSecret: qqClientSecret,
+    }] : []),
   ],
   callbacks: {
     async signIn({ user }) {
@@ -60,17 +67,21 @@ export const authOptions: AuthOptions = {
         return false;
       }
 
-      const banned = await isUserBanned(user.id);
-      if (banned) {
-        return false;
-      }
+      try {
+        const banned = await isUserBanned(user.id);
+        if (banned) {
+          return false;
+        }
 
-      await upsertManagedUser({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        image: user.image,
-      });
+        await upsertManagedUser({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+        });
+      } catch (error) {
+        console.error('Failed to synchronize signed-in user:', error);
+      }
 
       return true;
     },

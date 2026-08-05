@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { useAuthProviders } from './useAuthProviders';
 
 interface AccountState {
   loggedIn: boolean;
@@ -22,6 +23,7 @@ export default function AuthButton() {
   const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [account, setAccount] = useState<AccountState | null>(null);
+  const { isLoading: isLoadingProviders, githubEnabled, qqEnabled } = useAuthProviders();
   const userDisplayName = session?.user?.name || '用户';
 
   useEffect(() => {
@@ -123,18 +125,25 @@ export default function AuthButton() {
       </button>
       {isMenuOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-          <button
-            onClick={() => signIn('github')}
-            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            使用 GitHub 登录
-          </button>
-          <button
-            onClick={() => signIn('qq')}
-            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            使用 QQ 登录
-          </button>
+          {githubEnabled && (
+            <button
+              onClick={() => signIn('github')}
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              使用 GitHub 登录
+            </button>
+          )}
+          {qqEnabled && (
+            <button
+              onClick={() => signIn('qq')}
+              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              使用 QQ 登录
+            </button>
+          )}
+          {!isLoadingProviders && !githubEnabled && !qqEnabled && (
+            <p className="px-4 py-2 text-sm text-gray-500">登录服务尚未配置</p>
+          )}
         </div>
       )}
     </div>

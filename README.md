@@ -46,6 +46,7 @@ Cloudflare 补充说明：项目已迁移到 OpenNext 方案，推荐使用 Work
 | `QQ_APP_ID` | QQ 互联 App ID |
 | `QQ_APP_KEY` | QQ 互联 App Key |
 | `AUTH_SECRET` | NextAuth 会话加密密钥，建议用 `openssl rand -hex 32` 生成 |
+| `NEXTAUTH_URL` | 生产站点的完整 HTTPS 地址，例如 `https://example.com` |
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST URL |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST Token |
 
@@ -69,6 +70,7 @@ Cloudflare 补充说明：项目已迁移到 OpenNext 方案，推荐使用 Work
 4. 确认 Node.js 版本不低于 20（推荐 22）。
 5. 首次部署成功后，用目标管理员账号登录一次并记录用户 ID。
 6. 将该用户 ID 写入 `ADMIN_USER_IDS` 后重新部署。
+7. 在 GitHub OAuth App 的 Authorization callback URL 中填写 `https://你的域名/api/auth/callback/github`，并确保与 `NEXTAUTH_URL` 的域名一致。
 
 ### 🛠 分平台部署步骤
 

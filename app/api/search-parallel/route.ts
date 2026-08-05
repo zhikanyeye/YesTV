@@ -7,6 +7,7 @@
 import { NextRequest } from 'next/server';
 import { searchVideos } from '@/lib/api/client';
 import type { VideoItem, VideoSource } from '@/lib/types';
+import { matchesSearchQuery } from '@/lib/utils/search';
 
 
 // Timeout configuration
@@ -109,7 +110,9 @@ export async function POST(request: NextRequest) {
             if (sourceResult?.error) {
               throw new Error(sourceResult.error);
             }
-            const videos = sourceResult?.results || [];
+            const videos = (sourceResult?.results || []).filter(video =>
+              matchesSearchQuery(video, query)
+            );
 
             completedSources++;
             totalVideosFound += videos.length;

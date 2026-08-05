@@ -5,28 +5,32 @@
 
 import type { VideoItem } from '@/lib/types';
 
+function normalizeSearchText(value: string): string {
+  return value
+    .toLocaleLowerCase('zh-CN')
+    .replace(/[\s\p{P}\p{S}]/gu, '');
+}
+
 /**
- * Check if title contains at least 2 consecutive characters from search query
- * This filters out irrelevant results
+ * Keep only results whose title or credited actors contain the complete query.
+ * Upstream video sources often return loosely related results for keyword searches.
+ */
+export function matchesSearchQuery(item: VideoItem, query: string): boolean {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return false;
+
+  return [item.vod_name, item.vod_actor]
+    .filter((value): value is string => typeof value === 'string')
+    .some(value => normalizeSearchText(value).includes(normalizedQuery));
+}
+
+/**
+ * Check whether a title contains the complete normalized query.
  */
 export function hasMinimumMatch(title: string, query: string): boolean {
-  const normalizedTitle = title.toLowerCase();
-  const normalizedQuery = query.toLowerCase().trim();
-
-  if (normalizedQuery.length === 0) return false;
-
-  if (normalizedQuery.length === 1) {
-    return normalizedTitle.includes(normalizedQuery);
-  }
-
-  for (let i = 0; i <= normalizedQuery.length - 2; i++) {
-    const substring = normalizedQuery.slice(i, i + 2);
-    if (normalizedTitle.includes(substring)) {
-      return true;
-    }
-  }
-
-  return false;
+  const normalizedTitle = normalizeSearchText(title);
+  const normalizedQuery = normalizeSearchText(query);
+  return Boolean(normalizedQuery && normalizedTitle.includes(normalizedQuery));
 }
 
 /**
@@ -35,11 +39,11 @@ export function hasMinimumMatch(title: string, query: string): boolean {
  */
 export function calculateRelevanceScore(item: VideoItem, query: string): number {
   let score = 0;
-  const normalizedQuery = query.toLowerCase().trim();
-  const normalizedTitle = item.vod_name.toLowerCase();
+  const normalizedQuery = normalizeSearchText(query);
+  const normalizedTitle = normalizeSearchText(item.vod_name);
 
   // Split query into words for partial matching
-  const queryWords = normalizedQuery.split(/\s+/);
+  const queryWords = query.toLocaleLowerCase('zh-CN').trim().split(/\s+/);
 
   // 1. Exact title match (highest priority)
   if (normalizedTitle === normalizedQuery) {
@@ -85,7 +89,7 @@ export function calculateRelevanceScore(item: VideoItem, query: string): number 
 
   // 6. Actor match
   if (item.vod_actor) {
-    const normalizedActor = item.vod_actor.toLowerCase();
+    const normalizedActor = normalizeSearchText(item.vod_actor);
     if (normalizedActor.includes(normalizedQuery)) {
       score += 80;
     }
@@ -98,7 +102,7 @@ export function calculateRelevanceScore(item: VideoItem, query: string): number 
 
   // 7. Director match
   if (item.vod_director) {
-    const normalizedDirector = item.vod_director.toLowerCase();
+    const normalizedDirector = normalizeSearchText(item.vod_director);
     if (normalizedDirector.includes(normalizedQuery)) {
       score += 60;
     }
@@ -111,7 +115,7 @@ export function calculateRelevanceScore(item: VideoItem, query: string): number 
 
   // 8. Content/description match (if available)
   if (item.vod_content) {
-    const normalizedContent = item.vod_content.toLowerCase();
+    const normalizedContent = normalizeSearchText(item.vod_content);
     if (normalizedContent.includes(normalizedQuery)) {
       score += 20;
     }
@@ -149,4 +153,3 @@ export function calculateRelevanceScore(item: VideoItem, query: string): number 
 
   return Math.max(0, score); // Ensure non-negative
 }
-
