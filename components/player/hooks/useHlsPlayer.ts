@@ -67,21 +67,22 @@ export function useHlsPlayer({
                     abrBandWidthFactor: 0.8,            // Use 80% of estimated bandwidth (conservative)
                     abrBandWidthUpFactor: 0.7,          // Even more conservative when switching up
 
-                    // Loading Settings - More retries and longer timeouts
-                    fragLoadingMaxRetry: 6,
-                    fragLoadingRetryDelay: 1000,
-                    fragLoadingMaxRetryTimeout: 64000,
-                    manifestLoadingMaxRetry: 4,
-                    manifestLoadingRetryDelay: 1000,
-                    manifestLoadingMaxRetryTimeout: 64000,
-                    levelLoadingMaxRetry: 4,
-                    levelLoadingRetryDelay: 1000,
-                    levelLoadingMaxRetryTimeout: 64000,
+                    // Loading Settings - Fail fast: geo-blocked/anti-leech sources return 403
+                    // and retrying them only stalls the player with a spinner
+                    fragLoadingMaxRetry: 3,
+                    fragLoadingRetryDelay: 500,
+                    fragLoadingMaxRetryTimeout: 8000,
+                    manifestLoadingMaxRetry: 2,
+                    manifestLoadingRetryDelay: 500,
+                    manifestLoadingMaxRetryTimeout: 4000,
+                    levelLoadingMaxRetry: 2,
+                    levelLoadingRetryDelay: 500,
+                    levelLoadingMaxRetryTimeout: 4000,
 
                     // Timeouts
-                    fragLoadingTimeOut: 20000,     // 20 seconds for fragment loading
-                    manifestLoadingTimeOut: 10000, // 10 seconds for manifest
-                    levelLoadingTimeOut: 10000,    // 10 seconds for level
+                    fragLoadingTimeOut: 15000,     // 15 seconds for fragment loading
+                    manifestLoadingTimeOut: 8000, // 8 seconds for manifest
+                    levelLoadingTimeOut: 8000,    // 8 seconds for level
 
                     // Backbuffer - Keep some played content for seeking back
                     backBufferLength: 30,          // Keep 30 seconds of played content
@@ -129,12 +130,21 @@ export function useHlsPlayer({
 
                 let networkErrorRetries = 0;
                 let mediaErrorRetries = 0;
-                const MAX_RETRIES = 3;
+                const MAX_RETRIES = 2;
 
                 hls.on(Hls.Events.ERROR, (event, data) => {
                     if (data.fatal) {
                         switch (data.type) {
-                            case Hls.ErrorTypes.NETWORK_ERROR:
+                            case Hls.ErrorTypes.NETWORK_ERROR: {
+                                // Source explicitly refused (geo-block / anti-leech): retrying
+                                // never succeeds, surface a clear error immediately
+                                const status = data.response?.code;
+                                if (status === 401 || status === 403 || status === 451) {
+                                    console.error(`[HLS] Source refused access (HTTP ${status})`);
+                                    onError?.('源站拒绝访问（地区限制或防盗链），请尝试换源播放');
+                                    hls?.destroy();
+                                    break;
+                                }
                                 networkErrorRetries++;
                                 console.error(`[HLS] Network error (${networkErrorRetries}/${MAX_RETRIES}), trying to recover...`, data);
                                 if (networkErrorRetries <= MAX_RETRIES) {
@@ -145,6 +155,7 @@ export function useHlsPlayer({
                                     hls?.destroy();
                                 }
                                 break;
+                            }
                             case Hls.ErrorTypes.MEDIA_ERROR:
                                 mediaErrorRetries++;
                                 console.error(`[HLS] Media error (${mediaErrorRetries}/${MAX_RETRIES}), trying to recover...`, data);
