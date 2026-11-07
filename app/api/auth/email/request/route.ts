@@ -65,8 +65,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '请求过于频繁，请 10 分钟后再试' }, { status: 429 });
   }
 
+  let token: string;
   try {
-    const token = await createEmailToken(email);
+    token = await createEmailToken(email);
+  } catch (error) {
+    console.error('Redis unavailable while creating email token:', error);
+    return NextResponse.json({ error: '登录服务暂时不可用，请稍后重试' }, { status: 503 });
+  }
+
+  try {
     const link = `${getBaseUrl(request)}/auth/email?${new URLSearchParams({ email, token }).toString()}`;
     await sendMagicLinkEmail(email, link);
   } catch (error) {
