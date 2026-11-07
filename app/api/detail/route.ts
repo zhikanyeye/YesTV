@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getVideoDetail } from '@/lib/api/client';
 import { getSourceById } from '@/lib/api/video-sources';
+import { detailCache, DETAIL_CACHE_TTL_MS } from '@/lib/api/server-cache';
 
 
 /**
@@ -47,7 +48,18 @@ async function handleDetailRequest(id: string | null, source: string | null) {
 
   // Fetch video detail without validation (already validated during search)
   try {
+    // Serve repeated play-page visits from cache
+    const detailKey = `${sourceConfig.id}:${id}`;
+    const cached = detailCache.get(detailKey);
+    if (cached) {
+      return NextResponse.json({
+        success: true,
+        data: cached,
+      });
+    }
+
     const videoDetail = await getVideoDetail(id, sourceConfig);
+    detailCache.set(detailKey, videoDetail, DETAIL_CACHE_TTL_MS);
 
     // Skip validation - videos are already checked during search
     // Just return the episodes as-is

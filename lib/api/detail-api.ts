@@ -6,6 +6,8 @@ import type {
 import { fetchWithTimeout, withRetry } from './http-utils';
 import { parseEpisodes } from './parsers';
 
+const DETAIL_TIMEOUT = 10000;
+
 /**
  * Get video detail from a single source
  */
@@ -25,14 +27,14 @@ export async function getVideoDetail(
                     'User-Agent': 'Mozilla/5.0',
                     ...source.headers,
                 },
-            });
+            }, DETAIL_TIMEOUT);
 
             if (!res.ok) {
                 throw new Error(`HTTP ${res.status}: ${res.statusText}`);
             }
 
             return res;
-        });
+        }, 1);
 
         const data: ApiDetailResponse = await response.json();
 

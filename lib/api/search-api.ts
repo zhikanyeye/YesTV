@@ -4,6 +4,10 @@ import type {
     ApiSearchResponse,
 } from '@/lib/types';
 import { fetchWithTimeout, withRetry } from './http-utils';
+
+// Aligned with the route-level SSE timeout so a slow source is cut off once
+const SEARCH_TIMEOUT = 8000;
+
 /**
  * Search videos from a single source
  */
@@ -21,6 +25,8 @@ async function searchVideosBySource(
     url.searchParams.set('pg', page.toString());
 
     try {
+        // No retries: a failing source is unlikely to recover within the
+        // search window, and retries only waste concurrency slots
         const response = await withRetry(async () => {
             const res = await fetchWithTimeout(url.toString(), {
                 method: 'GET',
@@ -29,14 +35,14 @@ async function searchVideosBySource(
                     ...source.headers,
                 },
                 signal,
-            });
+            }, SEARCH_TIMEOUT);
 
             if (!res.ok) {
                 throw new Error(`HTTP ${res.status}: ${res.statusText}`);
             }
 
             return res;
-        });
+        }, 0);
 
         const data: ApiSearchResponse = await response.json();
 

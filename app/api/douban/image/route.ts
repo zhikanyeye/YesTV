@@ -17,6 +17,8 @@ export async function GET(request: Request) {
                 Accept: 'image/jpeg,image/png,image/gif,*/*;q=0.8',
                 Referer: 'https://movie.douban.com/',
             },
+            // Cache upstream image on the server side too
+            next: { revalidate: 86400 },
         });
 
         if (!imageResponse.ok) {

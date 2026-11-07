@@ -113,8 +113,9 @@ const nextConfig: NextConfig = {
       },
     ],
     // Add image optimization for better performance
+    // Poster covers rarely change; avoid re-optimizing on every request
     formats: ['image/webp'],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 86400,
   },
 };
 

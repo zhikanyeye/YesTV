@@ -8,6 +8,16 @@ import { NextRequest } from 'next/server';
 import { searchVideos } from '@/lib/api/client';
 import type { VideoItem, VideoSource } from '@/lib/types';
 import { matchesSearchQuery } from '@/lib/utils/search';
+import {
+  searchCache,
+  SEARCH_CACHE_TTL_MS,
+  type CachedSourceSearch,
+} from '@/lib/api/server-cache';
+import {
+  isSourceDisabled,
+  recordSourceSuccess,
+  recordSourceFailure,
+} from '@/lib/api/source-health';
 
 
 // Timeout configuration
@@ -85,6 +95,48 @@ export async function POST(request: NextRequest) {
 
         const searchSource = async (source: VideoSource) => {
           const startTime = performance.now(); // Track start time
+
+          // Skip sources that keep failing (auto-disabled by health tracker)
+          if (isSourceDisabled(source.id)) {
+            completedSources++;
+            send({
+              type: 'source-error',
+              source: source.id,
+              sourceName: source.name,
+              message: 'Source temporarily disabled (repeated failures)',
+            });
+            send({
+              type: 'progress',
+              completedSources,
+              totalSources: sources.length,
+              totalVideosFound
+            });
+            return;
+          }
+
+          // Serve repeated queries from the server-side cache
+          const cacheKey = `${source.id}:p${page}:${query.trim()}`;
+          const cached = searchCache.get(cacheKey);
+          if (cached) {
+            completedSources++;
+            totalVideosFound += cached.videos.length;
+            send({
+              type: 'videos',
+              videos: cached.videos,
+              source: source.id,
+              completedSources,
+              totalSources: sources.length,
+              latency: cached.latency,
+            });
+            send({
+              type: 'progress',
+              completedSources,
+              totalSources: sources.length,
+              totalVideosFound
+            });
+            return;
+          }
+
           const sourceController = new AbortController();
           let timedOut = false;
           const abortFromRequest = () => sourceController.abort();
@@ -104,8 +156,6 @@ export async function POST(request: NextRequest) {
               sourceController.signal
             );
             
-            const endTime = performance.now(); // Track end time
-            const latency = Math.round(endTime - startTime); // Calculate latency in ms
             const sourceResult = result[0];
             if (sourceResult?.error) {
               throw new Error(sourceResult.error);
@@ -117,21 +167,30 @@ export async function POST(request: NextRequest) {
             completedSources++;
             totalVideosFound += videos.length;
 
-
+            const latency = Math.round(performance.now() - startTime);
+            recordSourceSuccess(source.id);
 
             // Stream videos immediately as they arrive WITH latency data
             if (videos.length > 0) {
+              const payload = videos.map((video: VideoItem) => ({
+                ...video,
+                sourceDisplayName: source.name,
+                latency,
+              }));
+
+              searchCache.set(
+                cacheKey,
+                { videos: payload, latency } satisfies CachedSourceSearch,
+                SEARCH_CACHE_TTL_MS
+              );
+
               send({
                 type: 'videos',
-                videos: videos.map((video: VideoItem) => ({
-                  ...video,
-                  sourceDisplayName: source.name,
-                  latency, // Add latency to each video
-                })),
+                videos: payload,
                 source: source.id,
                 completedSources,
                 totalSources: sources.length,
-                latency, // Also include at source level
+                latency,
               });
             }
 
@@ -155,7 +214,8 @@ export async function POST(request: NextRequest) {
             } else {
               console.error(`[Search Parallel] Source ${source.id} failed after ${latency}ms:`, error);
             }
-            
+
+            recordSourceFailure(source.id);
             completedSources++;
 
             send({
