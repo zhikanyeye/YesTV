@@ -67,6 +67,17 @@ function isProxyTargetAllowed(target: URL): boolean {
     return true;
 }
 
+// On serverless platforms TLS terminates upstream, so nextUrl.origin may be http.
+// Prefer forwarded headers so rewritten m3u8 URLs stay same-origin HTTPS.
+function getPublicOrigin(request: NextRequest): string {
+    const proto = request.headers.get('x-forwarded-proto')?.split(',')[0].trim();
+    const host = request.headers.get('x-forwarded-host')?.split(',')[0].trim() || request.headers.get('host');
+    if (proto && host) {
+        return `${proto}://${host}`;
+    }
+    return request.nextUrl.origin;
+}
+
 export async function GET(request: NextRequest) {
     const rawUrl = request.nextUrl.searchParams.get('url');
 
@@ -127,7 +138,7 @@ export async function GET(request: NextRequest) {
 
             // Verify it's actually M3U8 content (starts with #EXTM3U or #EXT-X-)
             if (text.trim().startsWith('#EXTM3U') || text.trim().startsWith('#EXT-X-')) {
-                const modifiedText = await processM3u8Content(text, url, request.nextUrl.origin);
+                const modifiedText = await processM3u8Content(text, url, getPublicOrigin(request));
 
                 return new NextResponse(modifiedText, {
                     status: response.status,
