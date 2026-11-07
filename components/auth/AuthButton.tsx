@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useAuthProviders } from './useAuthProviders';
 
 interface AccountState {
@@ -23,8 +23,36 @@ export default function AuthButton() {
   const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [account, setAccount] = useState<AccountState | null>(null);
-  const { isLoading: isLoadingProviders, githubEnabled, qqEnabled } = useAuthProviders();
+  const { isLoading: isLoadingProviders, githubEnabled, qqEnabled, emailEnabled } = useAuthProviders();
   const userDisplayName = session?.user?.name || '用户';
+  const [emailInput, setEmailInput] = useState('');
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [emailMessage, setEmailMessage] = useState('');
+
+  async function handleEmailSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setEmailStatus('sending');
+    setEmailMessage('');
+
+    try {
+      const response = await fetch('/api/auth/email/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailInput }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (response.ok) {
+        setEmailStatus('sent');
+        setEmailMessage('登录链接已发送，请查收邮件（10 分钟内有效）');
+      } else {
+        setEmailStatus('error');
+        setEmailMessage(data.error || '发送失败，请稍后重试');
+      }
+    } catch {
+      setEmailStatus('error');
+      setEmailMessage('网络错误，请稍后重试');
+    }
+  }
 
   useEffect(() => {
     let ignore = false;
@@ -67,13 +95,22 @@ export default function AuthButton() {
           aria-haspopup="menu"
           type="button"
         >
-          <Image
-            src={session.user?.image ?? ''}
-            alt={userDisplayName}
-            width={32}
-            height={32}
-            className="rounded-full"
-          />
+          {session.user?.image ? (
+            <Image
+              src={session.user.image}
+              alt={userDisplayName}
+              width={32}
+              height={32}
+              className="rounded-full"
+            />
+          ) : (
+            <span
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-700 text-sm font-medium text-white"
+              aria-hidden="true"
+            >
+              {userDisplayName.slice(0, 1).toUpperCase()}
+            </span>
+          )}
         </button>
         {isMenuOpen && (
           <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-2 z-10">
@@ -124,7 +161,7 @@ export default function AuthButton() {
         登录
       </button>
       {isMenuOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+        <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1 z-10">
           {githubEnabled && (
             <button
               onClick={() => signIn('github')}
@@ -141,7 +178,35 @@ export default function AuthButton() {
               使用 QQ 登录
             </button>
           )}
-          {!isLoadingProviders && !githubEnabled && !qqEnabled && (
+          {emailEnabled && (
+            <form
+              onSubmit={handleEmailSubmit}
+              className={`px-4 py-2 space-y-2 ${githubEnabled || qqEnabled ? 'border-t border-gray-100' : ''}`}
+            >
+              <input
+                type="email"
+                value={emailInput}
+                onChange={event => setEmailInput(event.target.value)}
+                placeholder="输入邮箱，获取登录链接"
+                required
+                autoComplete="email"
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900"
+              />
+              <button
+                type="submit"
+                disabled={emailStatus === 'sending'}
+                className="w-full rounded bg-gray-900 px-2 py-1.5 text-sm text-white disabled:opacity-60"
+              >
+                {emailStatus === 'sending' ? '发送中...' : '发送登录链接'}
+              </button>
+              {emailMessage && (
+                <p className={`text-xs ${emailStatus === 'sent' ? 'text-green-600' : 'text-red-600'}`}>
+                  {emailMessage}
+                </p>
+              )}
+            </form>
+          )}
+          {!isLoadingProviders && !githubEnabled && !qqEnabled && !emailEnabled && (
             <p className="px-4 py-2 text-sm text-gray-500">登录服务尚未配置</p>
           )}
         </div>

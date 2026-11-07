@@ -50,6 +50,17 @@ Cloudflare 补充说明：项目已迁移到 OpenNext 方案，推荐使用 Work
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST URL |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST Token |
 
+在 Vercel 上通过 Marketplace 集成 Upstash Redis 时，注入的 `KV_REST_API_URL` / `KV_REST_API_TOKEN` 同样会被识别。
+
+#### 选填（邮箱魔法链接登录）
+
+三项（`RESEND_API_KEY`、`EMAIL_FROM`、Redis）全部配置后，登录菜单会出现邮箱登录入口。
+
+| 变量名 | 说明 |
+| :--- | :--- |
+| `RESEND_API_KEY` | Resend API Key |
+| `EMAIL_FROM` | 发件人，需使用 Resend 已验证的域名，例如 `YesTV <login@example.com>` |
+
 #### 选填（增强功能）
 
 | 变量名 | 说明 |

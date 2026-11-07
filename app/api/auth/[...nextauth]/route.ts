@@ -1,6 +1,14 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import type { UserinfoEndpointHandler } from "next-auth/providers/oauth";
 import GithubProvider from "next-auth/providers/github";
+import CredentialsProvider from "next-auth/providers/credentials";
+import {
+  consumeEmailToken,
+  emailToUserId,
+  isEmailLoginConfigured,
+  isValidEmail,
+  normalizeEmail,
+} from '@/lib/auth/email-token';
 import { isUserBanned, upsertManagedUser } from '@/lib/user-management';
 
 interface QQProfile {
@@ -60,7 +68,37 @@ export const authOptions: AuthOptions = {
       clientId: qqClientId,
       clientSecret: qqClientSecret,
     }] : []),
+    ...(isEmailLoginConfigured()
+      ? [CredentialsProvider({
+          id: "email",
+          name: "Email",
+          credentials: {
+            email: { label: "Email", type: "email" },
+            token: { label: "Token", type: "text" },
+          },
+          async authorize(credentials) {
+            const email = normalizeEmail(credentials?.email ?? "");
+            const token = credentials?.token ?? "";
+            if (!isValidEmail(email) || !token) {
+              return null;
+            }
+
+            const valid = await consumeEmailToken(email, token);
+            if (!valid) {
+              return null;
+            }
+
+            return {
+              id: emailToUserId(email),
+              name: email.split("@")[0],
+              email,
+              image: null,
+            };
+          },
+        })]
+      : []),
   ],
+  session: { strategy: "jwt" },
   callbacks: {
     async signIn({ user }) {
       if (!user?.id) {
@@ -98,7 +136,8 @@ export const authOptions: AuthOptions = {
       return session;
     },
   },
-  secret: process.env.AUTH_SECRET,
+  // Accept both AUTH_SECRET and NextAuth's conventional NEXTAUTH_SECRET
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);

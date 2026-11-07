@@ -30,5 +30,6 @@ export function useAuthProviders() {
     isLoading: providerIds === null,
     githubEnabled: providerIds?.includes('github') ?? false,
     qqEnabled: providerIds?.includes('qq') ?? false,
+    emailEnabled: providerIds?.includes('email') ?? false,
   };
 }
