@@ -13,7 +13,7 @@ export interface RequestAuthContext {
 export async function getRequestAuthContext(req: NextRequest): Promise<RequestAuthContext> {
   const token = await getToken({
     req,
-    secret: process.env.AUTH_SECRET,
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   });
 
   const userIdFromToken = typeof token?.id === 'string'
