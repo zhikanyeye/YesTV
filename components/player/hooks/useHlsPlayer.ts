@@ -18,7 +18,20 @@ export function useHlsPlayer({
 }: UseHlsPlayerProps) {
     const hlsRef = useRef<Hls | null>(null);
 
+    // Callbacks live in refs so that inline arrow functions passed by callers
+    // never re-run the effect below (which would destroy and rebuild hls.js
+    // on every parent re-render and make the video flicker).
+    const onErrorRef = useRef(onError);
+    const onAutoPlayPreventedRef = useRef(onAutoPlayPrevented);
     useEffect(() => {
+        onErrorRef.current = onError;
+        onAutoPlayPreventedRef.current = onAutoPlayPrevented;
+    });
+
+    useEffect(() => {
+        const onError = (message: string) => onErrorRef.current?.(message);
+        const onAutoPlayPrevented = (err: Error) => onAutoPlayPreventedRef.current?.(err);
+
         const video = videoRef.current;
         if (!video || !src) return;
 
@@ -195,5 +208,5 @@ export function useHlsPlayer({
                 hls.destroy();
             }
         };
-    }, [src, videoRef, autoPlay, onAutoPlayPrevented, onError]);
+    }, [src, videoRef, autoPlay]);
 }
