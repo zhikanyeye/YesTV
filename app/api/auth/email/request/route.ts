@@ -69,7 +69,10 @@ export async function POST(request: NextRequest) {
   try {
     token = await createEmailToken(email);
   } catch (error) {
-    console.error('Redis unavailable while creating email token:', error);
+    console.error(
+      'Redis unavailable while creating email token:',
+      error instanceof Error ? error.message : error,
+    );
     return NextResponse.json({ error: '登录服务暂时不可用，请稍后重试' }, { status: 503 });
   }
 

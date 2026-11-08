@@ -4,6 +4,28 @@ import { db } from '@/lib/db';
 export const EMAIL_TOKEN_TTL_SECONDS = 600;
 
 const TOKEN_KEY_PREFIX = 'auth:email:token:';
+const REDIS_TIMEOUT_MS = 5000;
+
+/**
+ * Wraps a Redis operation with a hard timeout so a misconfigured or
+ * unreachable Redis never hangs the request until the platform timeout.
+ */
+async function withRedisTimeout<T>(operation: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`Redis operation timed out after ${REDIS_TIMEOUT_MS}ms: ${label}`)),
+          REDIS_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 export function isEmailLoginConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM && db);
@@ -35,9 +57,12 @@ export async function createEmailToken(email: string): Promise<string> {
   }
 
   const token = randomBytes(32).toString('hex');
-  await db.set(`${TOKEN_KEY_PREFIX}${sha256Hex(token)}`, normalizeEmail(email), {
-    ex: EMAIL_TOKEN_TTL_SECONDS,
-  });
+  await withRedisTimeout(
+    db.set(`${TOKEN_KEY_PREFIX}${sha256Hex(token)}`, normalizeEmail(email), {
+      ex: EMAIL_TOKEN_TTL_SECONDS,
+    }),
+    'createEmailToken.set',
+  );
   return token;
 }
 
@@ -50,6 +75,9 @@ export async function consumeEmailToken(email: string, token: string): Promise<b
     return false;
   }
 
-  const stored = await db.getdel<string>(`${TOKEN_KEY_PREFIX}${sha256Hex(token)}`);
+  const stored = await withRedisTimeout(
+    db.getdel<string>(`${TOKEN_KEY_PREFIX}${sha256Hex(token)}`),
+    'consumeEmailToken.getdel',
+  );
   return typeof stored === 'string' && stored === normalizeEmail(email);
 }
