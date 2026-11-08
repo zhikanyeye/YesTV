@@ -19,6 +19,9 @@ export function usePlayerSettings() {
             showModeIndicator: stored.showModeIndicator,
             showResolutionIndicator: stored.showResolutionIndicator,
             adBlockEnabled: stored.adBlockEnabled,
+            longPressSpeedEnabled: stored.longPressSpeedEnabled,
+            longPressSpeed: stored.longPressSpeed,
+            rememberPlayerState: stored.rememberPlayerState,
         };
     });
 
@@ -35,6 +38,9 @@ export function usePlayerSettings() {
                 showModeIndicator: stored.showModeIndicator,
                 showResolutionIndicator: stored.showResolutionIndicator,
                 adBlockEnabled: stored.adBlockEnabled,
+                longPressSpeedEnabled: stored.longPressSpeedEnabled,
+                longPressSpeed: stored.longPressSpeed,
+                rememberPlayerState: stored.rememberPlayerState,
             });
         });
         return unsubscribe;
@@ -83,6 +89,18 @@ export function usePlayerSettings() {
         updateSetting('adBlockEnabled', value);
     }, [updateSetting]);
 
+    const setLongPressSpeed = useCallback((value: number) => {
+        updateSetting('longPressSpeed', Math.min(4, Math.max(1.25, value)));
+    }, [updateSetting]);
+
+    const setLongPressSpeedEnabled = useCallback((value: boolean) => {
+        updateSetting('longPressSpeedEnabled', value);
+    }, [updateSetting]);
+
+    const setRememberPlayerState = useCallback((value: boolean) => {
+        updateSetting('rememberPlayerState', value);
+    }, [updateSetting]);
+
     return {
         ...settings,
         setAutoNextEpisode,
@@ -93,5 +111,8 @@ export function usePlayerSettings() {
         setShowModeIndicator,
         setShowResolutionIndicator,
         setAdBlockEnabled,
+        setLongPressSpeed,
+        setLongPressSpeedEnabled,
+        setRememberPlayerState,
     };
 }

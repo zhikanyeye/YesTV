@@ -36,6 +36,9 @@ export interface AppSettings {
   showModeIndicator: boolean; // Show '直连模式'/'代理模式' badge on player
   showResolutionIndicator: boolean; // Show video resolution badge on player
   adBlockEnabled: boolean;
+  longPressSpeedEnabled: boolean;
+  longPressSpeed: number; // Speed multiplier for long press fast forward (e.g. 2, 3)
+  rememberPlayerState: boolean; // Remember playback rate and aspect ratio
   // Search & Display settings
   realtimeLatency: boolean; // Enable real-time latency ping updates
   searchDisplayMode: string; // Search results display mode
@@ -123,6 +126,9 @@ export const settingsStore = {
         showModeIndicator: false,
         showResolutionIndicator: false,
         adBlockEnabled: true,
+        longPressSpeedEnabled: true,
+        longPressSpeed: 2,
+        rememberPlayerState: true,
         realtimeLatency: false,
         searchDisplayMode: 'normal',
         episodeReverseOrder: false,
@@ -149,6 +155,9 @@ export const settingsStore = {
         showModeIndicator: false,
         showResolutionIndicator: false,
         adBlockEnabled: true,
+        longPressSpeedEnabled: true,
+        longPressSpeed: 2,
+        rememberPlayerState: true,
         realtimeLatency: false,
         searchDisplayMode: 'normal',
         episodeReverseOrder: false,
@@ -214,6 +223,9 @@ export const settingsStore = {
         showModeIndicator: storedSettings.showModeIndicator !== undefined ? Boolean(storedSettings.showModeIndicator) : false,
         showResolutionIndicator: storedSettings.showResolutionIndicator !== undefined ? Boolean(storedSettings.showResolutionIndicator) : false,
         adBlockEnabled: storedSettings.adBlockEnabled !== undefined ? Boolean(storedSettings.adBlockEnabled) : true,
+        longPressSpeedEnabled: storedSettings.longPressSpeedEnabled !== undefined ? Boolean(storedSettings.longPressSpeedEnabled) : true,
+        longPressSpeed: typeof storedSettings.longPressSpeed === 'number' ? storedSettings.longPressSpeed : 2,
+        rememberPlayerState: storedSettings.rememberPlayerState !== undefined ? Boolean(storedSettings.rememberPlayerState) : true,
         realtimeLatency: storedSettings.realtimeLatency !== undefined ? Boolean(storedSettings.realtimeLatency) : false,
         searchDisplayMode: typeof storedSettings.searchDisplayMode === 'string' ? storedSettings.searchDisplayMode : 'normal',
         episodeReverseOrder: storedSettings.episodeReverseOrder !== undefined ? Boolean(storedSettings.episodeReverseOrder) : false,
@@ -240,6 +252,9 @@ export const settingsStore = {
         showModeIndicator: false,
         showResolutionIndicator: false,
         adBlockEnabled: true,
+        longPressSpeedEnabled: true,
+        longPressSpeed: 2,
+        rememberPlayerState: true,
         realtimeLatency: false,
         searchDisplayMode: 'normal',
         episodeReverseOrder: false,

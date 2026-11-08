@@ -4,84 +4,94 @@
  */
 
 import Hls from 'hls.js';
+import type {
+    HlsConfig,
+    Loader,
+    LoaderCallbacks,
+    LoaderConfiguration,
+    LoaderContext,
+    LoaderStats,
+} from 'hls.js';
 import { filterM3u8Ads } from './m3u8-ad-filter';
 
-export interface AdFilterLoaderConfig {
-    /** Base URL of the original m3u8 request, for resolving relative URIs in the playlist. */
-    baseUrl: string;
-    /** Whether ad filtering is enabled. */
-    enabled: boolean;
-}
+const DefaultLoader = Hls.DefaultConfig.loader;
 
-interface LoadContext {
-    type: string;
-    url: string;
-}
+export class AdFilterLoader implements Loader<LoaderContext> {
+    private inner: Loader<LoaderContext>;
 
-interface LoadStats {
-    loading: { start: number };
-    loaded?: number;
-}
+    constructor(config: HlsConfig) {
+        this.inner = new DefaultLoader(config);
+    }
 
-interface LoadCallbacks {
-    onSuccess: (response: { data: string | ArrayBuffer }, stats: LoadStats, context: LoadContext, networkDetails: unknown) => void;
-    onError: (error: { code: number; text: string }, context: LoadContext, networkDetails: unknown) => void;
-    onTimeout: (stats: LoadStats, context: LoadContext, networkDetails: unknown) => void;
-}
+    destroy(): void {
+        this.inner.destroy();
+    }
 
-export class AdFilterLoader extends Hls.DefaultConfig.loader {
-    private config: AdFilterLoaderConfig;
+    abort(): void {
+        this.inner.abort();
+    }
 
-    constructor(config: AdFilterLoaderConfig) {
-        super(Hls.DefaultConfig);
-        this.config = config;
+    getCacheAge(): number | null {
+        return this.inner.getCacheAge ? this.inner.getCacheAge() : null;
+    }
+
+    getResponseHeader(name: string): string | null {
+        return this.inner.getResponseHeader ? this.inner.getResponseHeader(name) : null;
+    }
+
+    get context(): LoaderContext | null {
+        return this.inner.context;
+    }
+
+    set context(ctx: LoaderContext | null) {
+        this.inner.context = ctx;
+    }
+
+    get stats(): LoaderStats {
+        return this.inner.stats;
+    }
+
+    set stats(s: LoaderStats) {
+        this.inner.stats = s;
     }
 
     load(
-        context: LoadContext,
-        config: typeof Hls.DefaultConfig,
-        callbacks: LoadCallbacks
+        context: LoaderContext,
+        config: LoaderConfiguration,
+        callbacks: LoaderCallbacks<LoaderContext>
     ): void {
-        const { onSuccess, onError, onTimeout } = callbacks;
+        const isManifest =
+            context.responseType === 'text' ||
+            context.responseType === '' ||
+            context.url.includes('.m3u8');
 
-        // Only intercept manifest (m3u8) requests when ad filtering is enabled
-        const isManifest = context.type === 'manifest' || context.url.includes('.m3u8');
-        const shouldFilter = this.config.enabled && isManifest;
-
-        if (!shouldFilter) {
-            // Pass through to default loader for non-manifest requests or when disabled
-            super.load(context, config, callbacks);
+        if (!isManifest) {
+            this.inner.load(context, config, callbacks);
             return;
         }
 
-        // Wrap onSuccess to apply ad filtering
-        const wrappedOnSuccess = (response: { data: string | ArrayBuffer }, stats: LoadStats, networkContext: LoadContext, networkDetails: unknown) => {
-            try {
-                let text = response.data;
-                if (typeof text !== 'string') {
-                    const decoder = new TextDecoder('utf-8');
-                    text = decoder.decode(new Uint8Array(response.data as ArrayBuffer));
-                }
+        const wrappedCallbacks: LoaderCallbacks<LoaderContext> = {
+            ...callbacks,
+            onSuccess: (response, stats, ctx, networkDetails) => {
+                try {
+                    const raw = response.data;
+                    const text =
+                        typeof raw === 'string'
+                            ? raw
+                            : new TextDecoder('utf-8').decode(new Uint8Array(raw as ArrayBuffer));
 
-                // Only filter media playlists (containing #EXTINF), not master playlists
-                if (text.includes('#EXTINF') && !text.includes('#EXT-X-STREAM-INF')) {
-                    const baseUrl = this.config.baseUrl || context.url;
-                    const filtered = filterM3u8Ads(text, baseUrl);
-                    response.data = filtered;
+                    if (text.includes('#EXTINF') && !text.includes('#EXT-X-STREAM-INF')) {
+                        const filtered = filterM3u8Ads(text, ctx.url);
+                        response.data = filtered;
+                    }
+                    callbacks.onSuccess(response, stats, ctx, networkDetails);
+                } catch (err) {
+                    console.warn('[AdFilterLoader] Failed to filter m3u8:', err);
+                    callbacks.onSuccess(response, stats, ctx, networkDetails);
                 }
-
-                onSuccess(response, stats, networkContext, networkDetails);
-            } catch (err) {
-                console.warn('[AdFilterLoader] Failed to filter m3u8:', err);
-                // On error, pass through the original response
-                onSuccess(response, stats, networkContext, networkDetails);
-            }
+            },
         };
 
-        super.load(context, config, {
-            onSuccess: wrappedOnSuccess,
-            onError,
-            onTimeout,
-        });
+        this.inner.load(context, config, wrappedCallbacks);
     }
 }
