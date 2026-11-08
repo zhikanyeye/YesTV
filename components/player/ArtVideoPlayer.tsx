@@ -521,7 +521,6 @@ export function ArtVideoPlayer({
           ? { poster: initPropsRef.current.poster }
           : {}),
         autoSize: true,
-        autoMini: true,
         pip: true,
         fullscreen: true,
         fullscreenWeb: true,
