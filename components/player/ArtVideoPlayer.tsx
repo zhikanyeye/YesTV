@@ -9,6 +9,8 @@ import { AdFilterLoader } from '@/lib/utils/hls-ad-filter-loader';
 
 interface ArtVideoPlayerProps {
   src: string;
+  /** 原始播放地址（未经代理），用于判断真实媒体类型 */
+  sourceUrl?: string;
   poster?: string;
   onError?: (error: string) => void;
   onTimeUpdate?: (currentTime: number, duration: number) => void;
@@ -26,6 +28,7 @@ const STORAGE_ASPECT_RATIO_KEY = 'artplayer_aspect_ratio';
 
 export function ArtVideoPlayer({
   src,
+  sourceUrl,
   poster,
   onError,
   onTimeUpdate,
@@ -343,6 +346,42 @@ export function ArtVideoPlayer({
 
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+    // 按 URL 自动判断播放类型：m3u8/hls 走 hls.js，其余交给浏览器原生播放
+    // 代理地址没有扩展名，优先用原始地址判断
+    const detectType = (u: string): 'm3u8' | 'mp4' | 'auto' => {
+      const path = u.split('?')[0].toLowerCase();
+      if (path.endsWith('.m3u8') || path.includes('.m3u8')) return 'm3u8';
+      if (path.endsWith('.mp4') || path.endsWith('.webm') || path.endsWith('.mkv')) return 'mp4';
+      return 'auto';
+    };
+    const originalType = detectType(sourceUrl || src);
+    const videoType = originalType === 'auto' ? detectType(src) : originalType;
+
+    // 屏幕常亮（移动端播放时不自动熄屏）
+    let wakeLock: { release: () => Promise<void> } | null = null;
+    const requestWakeLock = () => {
+      if (typeof navigator === 'undefined' || !('wakeLock' in navigator)) return;
+      if (wakeLock) return;
+      (
+        navigator as Navigator & {
+          wakeLock: { request: (t: 'screen') => Promise<{ release: () => Promise<void> }> };
+        }
+      ).wakeLock
+        .request('screen')
+        .then((lock) => {
+          wakeLock = lock;
+        })
+        .catch(() => {
+          wakeLock = null;
+        });
+    };
+    const releaseWakeLock = () => {
+      if (!wakeLock) return;
+      const lock = wakeLock;
+      wakeLock = null;
+      lock.release().catch(() => {});
+    };
+
     let cancelled = false;
 
     import('artplayer').then((ArtplayerModule) => {
@@ -515,12 +554,13 @@ export function ArtVideoPlayer({
       const art = new Artplayer({
         container: containerRef.current!,
         url: src,
-        type: 'm3u8',
+        type: videoType === 'mp4' ? 'mp4' : 'm3u8',
         autoplay: initPropsRef.current.shouldAutoPlay,
         ...(typeof initPropsRef.current.poster === 'string' && initPropsRef.current.poster
           ? { poster: initPropsRef.current.poster }
           : {}),
-        autoSize: true,
+        autoSize: false,
+        autoMini: false,
         pip: true,
         fullscreen: true,
         fullscreenWeb: true,
@@ -530,6 +570,7 @@ export function ArtVideoPlayer({
         screenshot: true,
         hotkey: true,
         lang: 'zh-cn',
+        playsInline: true,
         // 移动端专用配置
         ...(isMobile && {
           lock: true,
@@ -712,8 +753,12 @@ export function ArtVideoPlayer({
       });
 
       // video:playing / video:canplay：清除看门狗
-      art.on('video:playing', () => clearWatchdog());
+      art.on('video:playing', () => {
+        clearWatchdog();
+        requestWakeLock();
+      });
       art.on('video:canplay', () => clearWatchdog());
+      art.on('video:pause', () => releaseWakeLock());
 
       // video:timeupdate：断点续播、跳片头片尾
       art.on('video:timeupdate', () => {
@@ -797,6 +842,7 @@ export function ArtVideoPlayer({
     return () => {
       cancelled = true;
       clearWatchdog();
+      releaseWakeLock();
       if (artRef.current) {
         const cleanup = (artRef.current as unknown as { __customCleanup?: () => void })
           .__customCleanup;
@@ -818,8 +864,7 @@ export function ArtVideoPlayer({
   return (
     <div
       ref={containerRef}
-      className="artplayer-container"
-      style={{ width: '100%', height: '100%', minHeight: '400px' }}
+      className="artplayer-container w-full h-full"
     />
   );
 }

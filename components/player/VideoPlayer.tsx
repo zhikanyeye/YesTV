@@ -188,6 +188,7 @@ export function VideoPlayer({
 
   return (
     <Card hover={false} className="p-0 overflow-hidden relative rounded-none sm:rounded-[var(--radius-2xl)]">
+      <div className="relative w-full aspect-video bg-black">
       {/* Resolution Indicator Badge - controlled by settings */}
       {showResolutionIndicator && videoResolution && videoResolution.width > 0 && videoResolution.height > 0 && (
         <div className="absolute top-3 left-3 z-30">
@@ -220,6 +221,7 @@ export function VideoPlayer({
         <CustomVideoPlayer
           key={`${useProxy ? 'proxy' : 'direct'}-${retryCount}`} // Only remount when switching modes or retrying, NOT when changing episodes
           src={finalPlayUrl}
+          sourceUrl={playUrl}
           onError={handleVideoError}
           onTimeUpdate={handleTimeUpdate}
           onResolutionChange={setVideoResolution}
@@ -231,6 +233,7 @@ export function VideoPlayer({
           isReversed={isReversed}
         />
       )}
+      </div>
     </Card>
   );
 }

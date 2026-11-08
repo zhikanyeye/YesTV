@@ -400,3 +400,56 @@
     border-radius: var(--radius-full);
     transition: width 0.1s linear;
 }
+
+/* ============================================
+   ARTPLAYER ADAPTIVE STYLES
+   ============================================ */
+
+/* 播放器容器铺满父级 16:9 区域 */
+.artplayer-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.artplayer-container .art-video-player {
+    width: 100%;
+    height: 100%;
+    font-size: 14px;
+}
+
+/* 移动端：加大控件点击区域，避免误触 */
+@media (max-width: 768px) {
+    .artplayer-container .art-video-player {
+        font-size: 13px;
+    }
+
+    .artplayer-container .art-video-player .art-bottom {
+        padding: 0 8px 8px;
+    }
+
+    .artplayer-container .art-video-player .art-controls {
+        height: 44px;
+    }
+
+    .artplayer-container .art-video-player .art-control {
+        min-width: 40px;
+        min-height: 40px;
+    }
+
+    .artplayer-container .art-video-player .art-progress {
+        padding: 8px 0;
+    }
+
+    .artplayer-container .art-video-player .art-settings {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+}
+
+/* 触屏设备禁用 hover 残留效果 */
+@media (hover: none) {
+    .artplayer-container .art-video-player .art-control:hover {
+        color: #fff;
+    }
+}
