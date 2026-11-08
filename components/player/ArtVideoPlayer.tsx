@@ -586,6 +586,28 @@ export function ArtVideoPlayer({
 
       artRef.current = art;
 
+      // 移动端全屏适配：iOS/Android 浏览器普遍不支持对非 video 元素调用
+      // 原生 requestFullscreen，导致点“全屏”没反应。这里在移动端把原生全屏
+      // 按钮的行为改为切换 ArtPlayer 的网页全屏（position:fixed 撑满视口）。
+      if (isMobile) {
+        const redirectFullscreen = (e: Event) => {
+          const target = e.target as HTMLElement | null;
+          if (!target) return;
+          const nativeFsBtn = target.closest('.art-control-fullscreen');
+          if (nativeFsBtn && !target.closest('.art-control-fullscreenWeb')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            art.fullscreenWeb = !art.fullscreenWeb;
+          }
+        };
+        (art as unknown as { __mobileFullscreenHandler?: (e: Event) => void }).__mobileFullscreenHandler =
+          redirectFullscreen;
+        const controlsEl = art.template?.$controls;
+        if (controlsEl) {
+          controlsEl.addEventListener('click', redirectFullscreen, true);
+        }
+      }
+
       // 注册设置面板里的自定义选项
       try {
         const customSettings = buildCustomSettings(art);
@@ -834,6 +856,11 @@ export function ArtVideoPlayer({
         containerElForCleanup?.removeEventListener('mousedown', handleMouseDown);
         window.removeEventListener('mouseup', handleMouseUp);
         containerElForCleanup?.removeEventListener('click', handleClickCapture, true);
+        const mobileHandler = (art as unknown as { __mobileFullscreenHandler?: (e: Event) => void })
+          .__mobileFullscreenHandler;
+        if (mobileHandler) {
+          art.template.$controls.removeEventListener('click', mobileHandler, true);
+        }
         if (spaceLongPressTimer) clearTimeout(spaceLongPressTimer);
         if (mouseLongPressTimer) clearTimeout(mouseLongPressTimer);
       };
