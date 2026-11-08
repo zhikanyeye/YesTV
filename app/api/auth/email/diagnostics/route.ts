@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, dbConfigSource } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,9 +11,13 @@ const REDIS_TIMEOUT_MS = 5000;
  * Reports only presence/booleans and error messages, never secret values.
  */
 export async function GET() {
-  const rawUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || '';
+  // 使用与 db 相同的来源，保证诊断反映真实使用的配置
+  const isKv = dbConfigSource === 'KV';
+  const rawUrl =
+    (isKv ? process.env.KV_REST_API_URL : process.env.UPSTASH_REDIS_REST_URL) || '';
   const rawToken =
-    process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || '';
+    (isKv ? process.env.KV_REST_API_TOKEN : process.env.UPSTASH_REDIS_REST_TOKEN) ||
+    '';
 
   let urlHost: string | null = null;
   let urlProtocol: string | null = null;
@@ -33,6 +37,7 @@ export async function GET() {
     ),
     resendConfigured: Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM),
     redisConfigured: Boolean(db),
+    redisConfigSource: dbConfigSource,
     redisUrlSource: process.env.UPSTASH_REDIS_REST_URL
       ? 'UPSTASH_REDIS_REST_URL'
       : process.env.KV_REST_API_URL
