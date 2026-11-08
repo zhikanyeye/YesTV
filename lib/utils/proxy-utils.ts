@@ -1,7 +1,13 @@
+import { filterM3u8Ads } from './m3u8-ad-filter';
+
 /**
  * Extract and proxy URI from HLS tags like EXT-X-KEY, EXT-X-MAP, EXT-X-MEDIA
  */
-function proxyUriInTag(line: string, base: URL, origin: string): string {
+function buildProxyUrl(origin: string, absoluteUrl: string, adFilter: boolean): string {
+    return `${origin}/api/proxy?url=${encodeURIComponent(absoluteUrl)}${adFilter ? '&ad=1' : ''}`;
+}
+
+function proxyUriInTag(line: string, base: URL, origin: string, adFilter: boolean): string {
     const uriMatch = line.match(/URI="([^"]+)"/);
     if (uriMatch && uriMatch[1]) {
         const uri = uriMatch[1];
@@ -11,7 +17,7 @@ function proxyUriInTag(line: string, base: URL, origin: string): string {
         }
         try {
             const absoluteUrl = new URL(uri, base).toString();
-            const proxiedUrl = `${origin}/api/proxy?url=${encodeURIComponent(absoluteUrl)}`;
+            const proxiedUrl = buildProxyUrl(origin, absoluteUrl, adFilter);
             return line.replace(/URI="[^"]+"/, `URI="${proxiedUrl}"`);
         } catch {
             return line;
@@ -20,12 +26,22 @@ function proxyUriInTag(line: string, base: URL, origin: string): string {
     return line;
 }
 
+export interface ProcessM3u8Options {
+    /** Strip ad blocks from media playlists before rewriting URLs. */
+    adFilter?: boolean;
+}
+
 export async function processM3u8Content(
     content: string,
     baseUrl: string,
-    origin: string
+    origin: string,
+    options: ProcessM3u8Options = {}
 ): Promise<string> {
-    const lines = content.split('\n');
+    const adFilter = options.adFilter === true;
+    // Filter on the original absolute URLs: once segment URLs are rewritten to
+    // /api/proxy?url=... their directories can no longer be compared.
+    const source = adFilter ? filterM3u8Ads(content, baseUrl) : content;
+    const lines = source.split('\n');
     const base = new URL(baseUrl);
 
     const processedLines = lines.map(line => {
@@ -33,17 +49,17 @@ export async function processM3u8Content(
 
         // Handle EXT-X-KEY (encryption keys)
         if (trimmed.startsWith('#EXT-X-KEY:')) {
-            return proxyUriInTag(trimmed, base, origin);
+            return proxyUriInTag(trimmed, base, origin, adFilter);
         }
 
         // Handle EXT-X-MAP (fMP4 initialization segments)
         if (trimmed.startsWith('#EXT-X-MAP:')) {
-            return proxyUriInTag(trimmed, base, origin);
+            return proxyUriInTag(trimmed, base, origin, adFilter);
         }
 
         // Handle EXT-X-MEDIA (alternative audio/subtitle tracks)
         if (trimmed.startsWith('#EXT-X-MEDIA:')) {
-            return proxyUriInTag(trimmed, base, origin);
+            return proxyUriInTag(trimmed, base, origin, adFilter);
         }
 
         // Handle EXT-X-STREAM-INF (master playlist variants)
@@ -65,7 +81,7 @@ export async function processM3u8Content(
 
         try {
             const absoluteUrl = new URL(trimmed, base).toString();
-            return `${origin}/api/proxy?url=${encodeURIComponent(absoluteUrl)}`;
+            return buildProxyUrl(origin, absoluteUrl, adFilter);
         } catch {
             return line;
         }

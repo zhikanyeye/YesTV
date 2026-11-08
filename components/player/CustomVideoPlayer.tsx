@@ -1,9 +1,6 @@
 'use client';
 
-import { DesktopVideoPlayer } from './DesktopVideoPlayer';
-import { MobileVideoPlayer } from './MobileVideoPlayer';
-import { useIsMobile } from '@/lib/hooks/mobile/useDeviceDetection';
-
+import { ArtVideoPlayer } from './ArtVideoPlayer';
 
 interface CustomVideoPlayerProps {
   src: string;
@@ -21,12 +18,9 @@ interface CustomVideoPlayerProps {
 }
 
 /**
- * Smart Video Player that renders different versions based on device
- * - Mobile/Tablet: Optimized touch controls, double-tap gestures, orientation lock
- * - Desktop: Full-featured player with hover interactions
+ * Video Player based on ArtPlayer with hls.js integration.
+ * Supports ad filtering, auto-skip, resume playback, and mobile gestures.
  */
 export function CustomVideoPlayer(props: CustomVideoPlayerProps) {
-  const isMobile = useIsMobile();
-  if (isMobile) return <MobileVideoPlayer {...props} />;
-  return <DesktopVideoPlayer {...props} />;
+  return <ArtVideoPlayer {...props} />;
 }

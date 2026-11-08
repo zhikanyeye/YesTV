@@ -18,6 +18,7 @@ export function usePlayerSettings() {
             skipOutroSeconds: stored.skipOutroSeconds,
             showModeIndicator: stored.showModeIndicator,
             showResolutionIndicator: stored.showResolutionIndicator,
+            adBlockEnabled: stored.adBlockEnabled,
         };
     });
 
@@ -33,6 +34,7 @@ export function usePlayerSettings() {
                 skipOutroSeconds: stored.skipOutroSeconds,
                 showModeIndicator: stored.showModeIndicator,
                 showResolutionIndicator: stored.showResolutionIndicator,
+                adBlockEnabled: stored.adBlockEnabled,
             });
         });
         return unsubscribe;
@@ -77,6 +79,10 @@ export function usePlayerSettings() {
         updateSetting('showResolutionIndicator', value);
     }, [updateSetting]);
 
+    const setAdBlockEnabled = useCallback((value: boolean) => {
+        updateSetting('adBlockEnabled', value);
+    }, [updateSetting]);
+
     return {
         ...settings,
         setAutoNextEpisode,
@@ -86,5 +92,6 @@ export function usePlayerSettings() {
         setSkipOutroSeconds,
         setShowModeIndicator,
         setShowResolutionIndicator,
+        setAdBlockEnabled,
     };
 }

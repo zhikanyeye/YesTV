@@ -35,6 +35,7 @@ export interface AppSettings {
   skipOutroSeconds: number;
   showModeIndicator: boolean; // Show '直连模式'/'代理模式' badge on player
   showResolutionIndicator: boolean; // Show video resolution badge on player
+  adBlockEnabled: boolean;
   // Search & Display settings
   realtimeLatency: boolean; // Enable real-time latency ping updates
   searchDisplayMode: string; // Search results display mode
@@ -121,6 +122,7 @@ export const settingsStore = {
         skipOutroSeconds: 0,
         showModeIndicator: false,
         showResolutionIndicator: false,
+        adBlockEnabled: true,
         realtimeLatency: false,
         searchDisplayMode: 'normal',
         episodeReverseOrder: false,
@@ -146,6 +148,7 @@ export const settingsStore = {
         skipOutroSeconds: 0,
         showModeIndicator: false,
         showResolutionIndicator: false,
+        adBlockEnabled: true,
         realtimeLatency: false,
         searchDisplayMode: 'normal',
         episodeReverseOrder: false,
@@ -210,6 +213,7 @@ export const settingsStore = {
         skipOutroSeconds: typeof storedSettings.skipOutroSeconds === 'number' ? storedSettings.skipOutroSeconds : 0,
         showModeIndicator: storedSettings.showModeIndicator !== undefined ? Boolean(storedSettings.showModeIndicator) : false,
         showResolutionIndicator: storedSettings.showResolutionIndicator !== undefined ? Boolean(storedSettings.showResolutionIndicator) : false,
+        adBlockEnabled: storedSettings.adBlockEnabled !== undefined ? Boolean(storedSettings.adBlockEnabled) : true,
         realtimeLatency: storedSettings.realtimeLatency !== undefined ? Boolean(storedSettings.realtimeLatency) : false,
         searchDisplayMode: typeof storedSettings.searchDisplayMode === 'string' ? storedSettings.searchDisplayMode : 'normal',
         episodeReverseOrder: storedSettings.episodeReverseOrder !== undefined ? Boolean(storedSettings.episodeReverseOrder) : false,
@@ -235,6 +239,7 @@ export const settingsStore = {
         skipOutroSeconds: 0,
         showModeIndicator: false,
         showResolutionIndicator: false,
+        adBlockEnabled: true,
         realtimeLatency: false,
         searchDisplayMode: 'normal',
         episodeReverseOrder: false,

@@ -138,7 +138,8 @@ export async function GET(request: NextRequest) {
 
             // Verify it's actually M3U8 content (starts with #EXTM3U or #EXT-X-)
             if (text.trim().startsWith('#EXTM3U') || text.trim().startsWith('#EXT-X-')) {
-                const modifiedText = await processM3u8Content(text, url, getPublicOrigin(request));
+                const adFilter = request.nextUrl.searchParams.get('ad') === '1';
+                const modifiedText = await processM3u8Content(text, url, getPublicOrigin(request), { adFilter });
 
                 return new NextResponse(modifiedText, {
                     status: response.status,

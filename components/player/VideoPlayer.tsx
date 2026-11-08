@@ -57,6 +57,11 @@ export function VideoPlayer({
     () => settingsStore.getSettings().showResolutionIndicator,
     () => false,
   );
+  const adBlockEnabled = useSyncExternalStore(
+    subscribeToSettings,
+    () => settingsStore.getSettings().adBlockEnabled,
+    () => true,
+  );
   
   // Store video resolution
   const [videoResolution, setVideoResolution] = useState<{ width: number; height: number } | null>(null);
@@ -174,7 +179,7 @@ export function VideoPlayer({
   }, [retryCount, MAX_MANUAL_RETRIES]);
 
   const finalPlayUrl = useProxy
-    ? `/api/proxy?url=${encodeURIComponent(playUrl)}&retry=${retryCount}` // Add retry param to force fresh request
+    ? `/api/proxy?url=${encodeURIComponent(playUrl)}&retry=${retryCount}${adBlockEnabled ? '&ad=1' : ''}` // Add retry param and ad filter flag
     : playUrl;
 
   if (!playUrl) {
