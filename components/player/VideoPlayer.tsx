@@ -19,6 +19,8 @@ interface VideoPlayerProps {
   onNextEpisode?: () => void;
   isReversed?: boolean;
   isPremium?: boolean;
+  /** Suggested when the video cannot be played in either mode */
+  onSwitchSource?: () => void;
 }
 
 export function VideoPlayer({
@@ -29,16 +31,20 @@ export function VideoPlayer({
   totalEpisodes,
   onNextEpisode,
   isReversed = false,
+  onSwitchSource,
 }: VideoPlayerProps) {
   const [videoError, setVideoError] = useState<string>('');
   const [useProxy, setUseProxy] = useState(false);
   const [shouldAutoPlay, setShouldAutoPlay] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
   const MAX_MANUAL_RETRIES = 20;
+  const AUTO_PROXY_COOLDOWN_MS = 20000;
   const lastSaveTimeRef = useRef(0);
   const currentTimeRef = useRef(0);
   const durationRef = useRef(0);
   const SAVE_INTERVAL = 5000; // 5 seconds throttle
+  const lastAutoProxyAtRef = useRef(0);
+  const autoProxyUsedRef = useRef(false);
 
   const subscribeToSettings = useCallback((listener: () => void) => settingsStore.subscribe(listener), []);
   const showModeIndicator = useSyncExternalStore(
@@ -129,38 +135,43 @@ export function VideoPlayer({
   }, [saveProgress]);
 
   // Handle video errors
-  const handleVideoError = (error: string) => {
+  const handleVideoError = useCallback((error: string) => {
     console.error('Video playback error:', error);
 
-    // Auto-retry with proxy if not already using it
-    if (!useProxy) {
+    // hls.js and the <video> element can both report the same failure in one
+    // tick; ignore the echo right after an automatic proxy switch.
+    if (!useProxy && autoProxyUsedRef.current && Date.now() - lastAutoProxyAtRef.current < 1500) {
+      return;
+    }
+
+    // The proxy path is a one-shot automatic fallback; after that the user
+    // decides whether to retry in the other direction, which keeps the
+    // player from flickering between direct and proxy on its own.
+    if (!useProxy && !autoProxyUsedRef.current && Date.now() - lastAutoProxyAtRef.current >= AUTO_PROXY_COOLDOWN_MS) {
+      autoProxyUsedRef.current = true;
+      lastAutoProxyAtRef.current = Date.now();
       setUseProxy(true);
-      setShouldAutoPlay(true); // Force autoplay after proxy retry
+      setShouldAutoPlay(true);
       setVideoError('');
       return;
     }
 
     setVideoError(error);
-  };
+  }, [useProxy]);
 
-  const handleRetry = () => {
+  // A new episode gets a fresh automatic proxy fallback
+  useEffect(() => {
+    autoProxyUsedRef.current = false;
+  }, [playUrl]);
+
+  const handleRetry = useCallback(() => {
     if (retryCount >= MAX_MANUAL_RETRIES) return;
 
     setRetryCount(prev => prev + 1);
     setVideoError('');
     setShouldAutoPlay(true);
-    // Toggle proxy to try different path, but since we are already in error state which likely means proxy failed (or direct failed),
-    // we can try toggling or just force re-render.
-    // Requirement says: "try without proxy and proxy and same as before"
-    // We will just toggle useProxy state to force a refresh with/without proxy.
-    // However, if we want to cycle, we can just toggle.
-    // But the requirement says "proxy attempt count to 20".
-    // So we just increment count and maybe toggle proxy or keep it.
-    // Let's toggle it to give best chance.
-    // Actually requirement says "try no proxy and proxy and same as before".
-    // So simple toggle is fine.
     setUseProxy(prev => !prev);
-  };
+  }, [retryCount, MAX_MANUAL_RETRIES]);
 
   const finalPlayUrl = useProxy
     ? `/api/proxy?url=${encodeURIComponent(playUrl)}&retry=${retryCount}` // Add retry param to force fresh request
@@ -198,6 +209,7 @@ export function VideoPlayer({
           onRetry={handleRetry}
           retryCount={retryCount}
           maxRetries={MAX_MANUAL_RETRIES}
+          onSwitchSource={retryCount >= 5 ? onSwitchSource : undefined}
         />
       ) : (
         <CustomVideoPlayer

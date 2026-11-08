@@ -93,6 +93,10 @@ function PlayerContent() {
     }
   }, [videoData, playUrl, videoId, currentEpisode, source, title, addToHistory]);
 
+  const handleScrollToSourceSwitcher = useCallback(() => {
+    document.getElementById('source-switcher')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, []);
+
   const handleEpisodeClick = useCallback((episode: PlayerEpisode, index: number) => {
     setCurrentEpisode(index);
     setPlayUrl(episode.url);
@@ -168,6 +172,7 @@ function PlayerContent() {
                   onNextEpisode={handleNextEpisode}
                   isReversed={isReversed}
                   isPremium={isPremium}
+                  onSwitchSource={handleScrollToSourceSwitcher}
                 />
               </div>
               <ExternalPlayerLauncher
@@ -212,6 +217,7 @@ function PlayerContent() {
                 />
 
                 {/* Unified Source Switcher - handles both grouped and searched sources */}
+                <div id="source-switcher" />
                 <UnifiedSourceSwitcher
                   groupedSources={groupedSources}
                   videoId={videoId}

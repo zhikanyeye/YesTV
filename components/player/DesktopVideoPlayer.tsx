@@ -43,7 +43,8 @@ export function DesktopVideoPlayer({
   useHlsPlayer({
     videoRef: refs.videoRef,
     src,
-    autoPlay: shouldAutoPlay
+    autoPlay: shouldAutoPlay,
+    onError: (message) => onError?.(message),
   });
 
   const {

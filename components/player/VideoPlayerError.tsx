@@ -8,6 +8,8 @@ interface VideoPlayerErrorProps {
     onRetry: () => void;
     retryCount: number;
     maxRetries: number;
+    /** Optional: offered when both direct and proxy paths have been tried */
+    onSwitchSource?: () => void;
 }
 
 export function VideoPlayerError({
@@ -16,6 +18,7 @@ export function VideoPlayerError({
     onRetry,
     retryCount,
     maxRetries,
+    onSwitchSource,
 }: VideoPlayerErrorProps) {
     return (
         <div className="aspect-video bg-black rounded-[var(--radius-2xl)] flex items-center justify-center">
@@ -55,6 +58,14 @@ export function VideoPlayerError({
                         >
                             <Icons.RefreshCw size={18} />
                             <span>重试 ({retryCount}/{maxRetries})</span>
+                        </button>
+                    )}
+                    {onSwitchSource && (
+                        <button
+                            onClick={onSwitchSource}
+                            className="btn-glass px-4 py-2 flex items-center gap-2"
+                        >
+                            <span>换源播放</span>
                         </button>
                     )}
                 </div>
