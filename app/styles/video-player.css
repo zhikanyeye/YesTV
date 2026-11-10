@@ -405,7 +405,9 @@
    ARTPLAYER ADAPTIVE STYLES
    ============================================ */
 
-/* 播放器容器铺满父级 16:9 区域 */
+/* 播放器容器铺满父级 16:9 区域。
+   注意：控件尺寸交给 ArtPlayer 自身的 .art-mobile 默认样式调校，
+   这里只覆盖进度条粗细等真正需要的项，避免覆盖冲突导致溢出/错位。 */
 .artplayer-container {
     width: 100%;
     height: 100%;
@@ -415,12 +417,11 @@
 .artplayer-container .art-video-player {
     width: 100%;
     height: 100%;
-    font-size: 14px;
-    /* 进度条：统一用官方变量控制粗细与间距，避免逐层覆盖导致视觉失衡 */
-    --art-progress-height: 5px;
-    --art-progress-top-gap: 8px;
-    --art-bottom-gap: 6px;
-    --art-control-height: 44px;
+}
+
+/* 进度条纤细风格：仅普通窗口态生效；全屏/网页全屏沿用官方 8px 加粗样式 */
+.artplayer-container .art-video-player:not(.art-fullscreen):not(.art-fullscreen-web) {
+    --art-progress-height: 4px;
 }
 
 /* 网页全屏（移动端主用）：必须高于页面所有浮层，否则会被导航/搜索面板遮挡 */
@@ -428,21 +429,10 @@
     z-index: 2147483000;
 }
 
-/* 移动端：适度加大控件点击热区，进度条保持纤细 */
+/* 移动端：进度条更纤细；设置面板在小屏上允许更高，方便滑动查看 */
 @media (max-width: 768px) {
-    .artplayer-container .art-video-player {
-        font-size: 13px;
-        --art-progress-height: 4px;
-        --art-progress-top-gap: 6px;
-        --art-bottom-gap: 5px;
-        --art-control-height: 42px;
-        --art-control-icon-scale: 1.05;
-    }
-
-    /* 只放大控制条内的按钮，排除进度条与缩略图轨道（它们也带 .art-control 类） */
-    .artplayer-container .art-video-player .art-controls .art-control {
-        min-width: 42px;
-        min-height: 42px;
+    .artplayer-container .art-video-player:not(.art-fullscreen):not(.art-fullscreen-web) {
+        --art-progress-height: 3px;
     }
 
     .artplayer-container .art-video-player .art-settings {
@@ -455,4 +445,59 @@
     .artplayer-container .art-video-player .art-control:hover {
         color: #fff;
     }
+}
+
+/* 控制条“长按加速”按钮 */
+.artplayer-container .art-video-player .art-control-speedBoost {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    cursor: pointer;
+}
+
+.artplayer-container .art-video-player .art-speed-boost-label {
+    font-size: 12px;
+    line-height: 1;
+    padding: 3px 7px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    white-space: nowrap;
+}
+
+.artplayer-container .art-video-player .art-control-speedBoost.art-speed-boost-active .art-speed-boost-label,
+.artplayer-container .art-video-player .art-control-speedBoost:active .art-speed-boost-label {
+    background: var(--art-theme, #f00);
+    color: #fff;
+}
+
+/* 设置面板“自定义长按倍速”数字输入框 */
+.artplayer-container .art-video-player .art-speed-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.artplayer-container .art-video-player .art-speed-input {
+    width: 68px;
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-size: 13px;
+    text-align: center;
+    outline: none;
+}
+
+.artplayer-container .art-video-player .art-speed-input:focus {
+    border-color: var(--art-theme, #f00);
+}
+
+.artplayer-container .art-video-player .art-speed-input-unit {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
 }

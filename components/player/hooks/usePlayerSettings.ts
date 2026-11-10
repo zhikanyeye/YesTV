@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { settingsStore } from '@/lib/store/settings-store';
+import { normalizeLongPressSpeed } from '@/lib/utils/player-speed';
 
 /**
  * Hook to access and update player settings from the settings store
@@ -90,7 +91,7 @@ export function usePlayerSettings() {
     }, [updateSetting]);
 
     const setLongPressSpeed = useCallback((value: number) => {
-        updateSetting('longPressSpeed', Math.min(4, Math.max(1.25, value)));
+        updateSetting('longPressSpeed', normalizeLongPressSpeed(value));
     }, [updateSetting]);
 
     const setLongPressSpeedEnabled = useCallback((value: boolean) => {

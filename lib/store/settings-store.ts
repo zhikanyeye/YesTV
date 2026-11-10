@@ -6,6 +6,7 @@ import type { VideoSource, SourceSubscription } from '@/lib/types';
 import { DEFAULT_SOURCES } from '@/lib/api/default-sources';
 import { PREMIUM_SOURCES } from '@/lib/api/premium-sources';
 import { createSubscription } from '@/lib/utils/source-import-utils';
+import { LONG_PRESS_SPEED_DEFAULT, normalizeLongPressSpeed } from '@/lib/utils/player-speed';
 
 export type SortOption =
   | 'default'
@@ -127,7 +128,7 @@ export const settingsStore = {
         showResolutionIndicator: false,
         adBlockEnabled: true,
         longPressSpeedEnabled: true,
-        longPressSpeed: 2,
+        longPressSpeed: LONG_PRESS_SPEED_DEFAULT,
         rememberPlayerState: true,
         realtimeLatency: false,
         searchDisplayMode: 'normal',
@@ -156,7 +157,7 @@ export const settingsStore = {
         showResolutionIndicator: false,
         adBlockEnabled: true,
         longPressSpeedEnabled: true,
-        longPressSpeed: 2,
+        longPressSpeed: LONG_PRESS_SPEED_DEFAULT,
         rememberPlayerState: true,
         realtimeLatency: false,
         searchDisplayMode: 'normal',
@@ -224,7 +225,7 @@ export const settingsStore = {
         showResolutionIndicator: storedSettings.showResolutionIndicator !== undefined ? Boolean(storedSettings.showResolutionIndicator) : false,
         adBlockEnabled: storedSettings.adBlockEnabled !== undefined ? Boolean(storedSettings.adBlockEnabled) : true,
         longPressSpeedEnabled: storedSettings.longPressSpeedEnabled !== undefined ? Boolean(storedSettings.longPressSpeedEnabled) : true,
-        longPressSpeed: typeof storedSettings.longPressSpeed === 'number' ? storedSettings.longPressSpeed : 2,
+        longPressSpeed: normalizeLongPressSpeed(storedSettings.longPressSpeed),
         rememberPlayerState: storedSettings.rememberPlayerState !== undefined ? Boolean(storedSettings.rememberPlayerState) : true,
         realtimeLatency: storedSettings.realtimeLatency !== undefined ? Boolean(storedSettings.realtimeLatency) : false,
         searchDisplayMode: typeof storedSettings.searchDisplayMode === 'string' ? storedSettings.searchDisplayMode : 'normal',
@@ -253,7 +254,7 @@ export const settingsStore = {
         showResolutionIndicator: false,
         adBlockEnabled: true,
         longPressSpeedEnabled: true,
-        longPressSpeed: 2,
+        longPressSpeed: LONG_PRESS_SPEED_DEFAULT,
         rememberPlayerState: true,
         realtimeLatency: false,
         searchDisplayMode: 'normal',

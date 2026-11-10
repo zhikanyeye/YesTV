@@ -6,6 +6,12 @@ import type { Setting, SettingOption } from 'artplayer';
 import Hls from 'hls.js';
 import { usePlayerSettings } from './hooks/usePlayerSettings';
 import { AdFilterLoader } from '@/lib/utils/hls-ad-filter-loader';
+import {
+  LONG_PRESS_SPEED_MAX,
+  LONG_PRESS_SPEED_MIN,
+  LONG_PRESS_SPEED_STEP,
+  normalizeLongPressSpeed,
+} from '@/lib/utils/player-speed';
 
 interface ArtVideoPlayerProps {
   src: string;
@@ -226,9 +232,11 @@ export function ArtVideoPlayer({
         tooltip: `${settingsRef.current.skipIntroSeconds}s`,
         range: [settingsRef.current.skipIntroSeconds, 0, 300, 5],
         onChange: function (item: SettingOption) {
-          const val = Number((item.$range as HTMLInputElement | undefined)?.value ?? 0);
-          item.tooltip = `${val}s`;
+          const val = item.$range?.valueAsNumber ?? Number(item.range[0] ?? 0);
+          const tooltip = `${val}s`;
+          item.tooltip = tooltip;
           callbacksRef.current.setSkipIntroSeconds(val);
+          return tooltip;
         },
       },
       {
@@ -252,9 +260,11 @@ export function ArtVideoPlayer({
         tooltip: `${settingsRef.current.skipOutroSeconds}s`,
         range: [settingsRef.current.skipOutroSeconds, 0, 300, 5],
         onChange: function (item: SettingOption) {
-          const val = Number((item.$range as HTMLInputElement | undefined)?.value ?? 0);
-          item.tooltip = `${val}s`;
+          const val = item.$range?.valueAsNumber ?? Number(item.range[0] ?? 0);
+          const tooltip = `${val}s`;
+          item.tooltip = tooltip;
           callbacksRef.current.setSkipOutroSeconds(val);
+          return tooltip;
         },
       },
       {
@@ -298,11 +308,61 @@ export function ArtVideoPlayer({
         html: '长按倍速',
         width: 200,
         tooltip: `${settingsRef.current.longPressSpeed}X`,
-        range: [settingsRef.current.longPressSpeed, 1.25, 4, 0.25],
+        range: [
+          settingsRef.current.longPressSpeed,
+          LONG_PRESS_SPEED_MIN,
+          LONG_PRESS_SPEED_MAX,
+          LONG_PRESS_SPEED_STEP,
+        ],
         onChange: function (item: SettingOption) {
-          const val = Number((item.$range as HTMLInputElement | undefined)?.value ?? 2);
-          item.tooltip = `${val}X`;
+          const val = normalizeLongPressSpeed(
+            item.$range?.valueAsNumber ?? Number(item.range[0])
+          );
+          const tooltip = `${val}X`;
+          item.tooltip = tooltip;
           callbacksRef.current.setLongPressSpeed(val);
+          return tooltip;
+        },
+      },
+      {
+        html: '自定义长按倍速',
+        width: 200,
+        tooltip: `${settingsRef.current.longPressSpeed}X`,
+        mounted: function (panel, item) {
+          const wrap = document.createElement('div');
+          wrap.className = 'art-speed-input-wrap';
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'art-speed-input';
+          input.min = String(LONG_PRESS_SPEED_MIN);
+          input.max = String(LONG_PRESS_SPEED_MAX);
+          input.step = String(LONG_PRESS_SPEED_STEP);
+          input.inputMode = 'decimal';
+          input.value = String(settingsRef.current.longPressSpeed);
+          const unit = document.createElement('span');
+          unit.className = 'art-speed-input-unit';
+          unit.textContent = 'X';
+
+          const commit = () => {
+            const val = normalizeLongPressSpeed(input.value);
+            input.value = String(val);
+            (item as SettingOption).tooltip = `${val}X`;
+            callbacksRef.current.setLongPressSpeed(val);
+          };
+          input.addEventListener('change', commit);
+          input.addEventListener('blur', commit);
+          input.addEventListener('keydown', (e) => {
+            if ((e as KeyboardEvent).key === 'Enter') {
+              e.preventDefault();
+              commit();
+              (input as HTMLInputElement).blur();
+            }
+          });
+
+          wrap.appendChild(input);
+          wrap.appendChild(unit);
+          const rightEl = panel.querySelector('.art-setting-item-right');
+          (rightEl || panel).appendChild(wrap);
         },
       },
       {
@@ -571,12 +631,12 @@ export function ArtVideoPlayer({
         hotkey: true,
         lang: 'zh-cn',
         playsInline: true,
-        // 移动端专用配置
+        // 移动端专用配置（fastForward 用内置的固定 3 倍速且无视设置项，
+        // 长按加速由下方自定义 touch 逻辑实现，尊重“长按加速/长按倍速”设置）
         ...(isMobile && {
           lock: true,
-          fastForward: true,
           autoOrientation: true,
-          gesture: true,
+          gesture: false,
         }),
         customType: {
           m3u8: setupHls,
@@ -625,10 +685,10 @@ export function ArtVideoPlayer({
         }
       }
 
-      // 监听倍速变化并持久化
+      // 监听倍速变化并持久化（长按加速的临时倍速不记忆）
       art.on('video:ratechange', () => {
         const currentRate = art.playbackRate;
-        if (settingsRef.current.rememberPlayerState && currentRate > 0) {
+        if (!isSpeedBoosting && settingsRef.current.rememberPlayerState && currentRate > 0) {
           try {
             localStorage.setItem(STORAGE_PLAYBACK_RATE_KEY, String(currentRate));
           } catch {
@@ -659,7 +719,7 @@ export function ArtVideoPlayer({
         if (!art.duration || art.duration <= 0) return;
         isSpeedBoosting = true;
         originalPlaybackRate = art.playbackRate;
-        const targetRate = settingsRef.current.longPressSpeed || 2;
+        const targetRate = normalizeLongPressSpeed(settingsRef.current.longPressSpeed);
         art.playbackRate = targetRate;
         art.notice.show = `${reason} ${targetRate}X`;
       };
@@ -670,6 +730,47 @@ export function ArtVideoPlayer({
         art.playbackRate = originalPlaybackRate;
         art.notice.show = `恢复 ${originalPlaybackRate}X`;
       };
+
+      // 控制条“长按加速”按钮：按住按设定倍速播放，松开恢复。
+      // 通过事件委托在容器层处理，避免 ArtPlayer 重建控件导致监听器丢失。
+      const isBoostButton = (target: EventTarget | null): HTMLElement | null => {
+        const el = target as HTMLElement | null;
+        if (!el || typeof el.closest !== 'function') return null;
+        return el.closest('.art-control-speedBoost') as HTMLElement | null;
+      };
+      let boostBtnActive: HTMLElement | null = null;
+      const beginBoostPress = (target: EventTarget | null, event: Event) => {
+        const btn = isBoostButton(target);
+        if (!btn) return false;
+        event.preventDefault();
+        event.stopPropagation();
+        startSpeedBoost('长按加速');
+        if (isSpeedBoosting) {
+          boostBtnActive = btn;
+          btn.classList.add('art-speed-boost-active');
+        }
+        return true;
+      };
+      const endBoostPress = () => {
+        if (boostBtnActive) {
+          boostBtnActive.classList.remove('art-speed-boost-active');
+          boostBtnActive = null;
+        }
+        stopSpeedBoost();
+      };
+
+      // 创建按钮（样式在 video-player.css 中定义）
+      try {
+        art.controls.add({
+          name: 'speedBoost',
+          index: 25,
+          position: 'right',
+          html: '<span class="art-speed-boost-label">长按</span>',
+          tooltip: `按住加速（${settingsRef.current.longPressSpeed}X）`,
+        });
+      } catch (e) {
+        console.warn('[ArtPlayer] Failed to register speed boost button:', e);
+      }
 
       // 空格：短按切换播放/暂停，长按加速。拦截 ArtPlayer 自带的 keydown 切换逻辑
       let spaceDown = false;
@@ -710,8 +811,10 @@ export function ArtVideoPlayer({
       // 桌面端鼠标长按视频画面加速
       const containerElForCleanup = containerRef.current;
       const handleMouseDown = (e: MouseEvent) => {
-        if (isMobile) return;
         if (e.button !== 0) return; // 仅左键
+        // 长按加速按钮：按住即加速（鼠标/触摸统一）
+        if (beginBoostPress(e.target, e)) return;
+        if (isMobile) return;
         const target = e.target as HTMLElement | null;
         // 如果点击的是控制条、设置菜单、右键菜单等 UI，不触发长按加速
         if (target && target.closest('.art-control, .art-controls, .art-settings, .art-contextmenu')) {
@@ -737,9 +840,50 @@ export function ArtVideoPlayer({
           clearTimeout(mouseLongPressTimer);
           mouseLongPressTimer = null;
         }
-        if (isSpeedBoosting) {
-          stopSpeedBoost();
+        endBoostPress();
+      };
+
+      // 移动端触摸长按加速：与桌面逻辑一致，尊重“长按加速/长按倍速”设置。
+      // 滑动（touchmove）时取消/立即恢复，避免与滑动快进手势冲突。
+      let touchLongPressTimer: NodeJS.Timeout | null = null;
+      const handleTouchStart = (e: TouchEvent) => {
+        if (e.touches.length !== 1 || art.isLock) return;
+        // 长按加速按钮：按住即加速
+        if (beginBoostPress(e.target, e)) return;
+        if (!isMobile) return;
+        const target = e.target as HTMLElement | null;
+        if (
+          target &&
+          target.closest(
+            '.art-control, .art-controls, .art-progress, .art-settings, .art-contextmenu, .art-layer, .art-layer-lock, .art-state'
+          )
+        ) {
+          return;
         }
+        if (touchLongPressTimer) clearTimeout(touchLongPressTimer);
+        touchLongPressTimer = setTimeout(() => {
+          startSpeedBoost('长按加速');
+          if (isSpeedBoosting) suppressNextClick = true;
+        }, 350);
+      };
+      const handleTouchMove = () => {
+        if (touchLongPressTimer) {
+          clearTimeout(touchLongPressTimer);
+          touchLongPressTimer = null;
+        }
+        if (isSpeedBoosting) stopSpeedBoost();
+      };
+      const handleTouchEnd = () => {
+        if (touchLongPressTimer) {
+          clearTimeout(touchLongPressTimer);
+          touchLongPressTimer = null;
+        }
+        endBoostPress();
+      };
+      const handleContextMenu = (event: Event) => {
+        if (!isMobile) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
       };
 
       window.addEventListener('keydown', handleKeyDown, true);
@@ -747,6 +891,11 @@ export function ArtVideoPlayer({
       containerElForCleanup?.addEventListener('mousedown', handleMouseDown);
       window.addEventListener('mouseup', handleMouseUp);
       containerRef.current?.addEventListener('click', handleClickCapture, true);
+      containerElForCleanup?.addEventListener('touchstart', handleTouchStart, { passive: true });
+      containerElForCleanup?.addEventListener('contextmenu', handleContextMenu, true);
+      window.addEventListener('touchmove', handleTouchMove, { passive: true });
+      window.addEventListener('touchend', handleTouchEnd, { passive: true });
+      window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 
       // ready 事件：跳转到初始时间 & 恢复倍速
       art.on('ready', () => {
@@ -855,6 +1004,11 @@ export function ArtVideoPlayer({
         window.removeEventListener('keyup', handleKeyUp, true);
         containerElForCleanup?.removeEventListener('mousedown', handleMouseDown);
         window.removeEventListener('mouseup', handleMouseUp);
+        containerElForCleanup?.removeEventListener('touchstart', handleTouchStart);
+        containerElForCleanup?.removeEventListener('contextmenu', handleContextMenu, true);
+        window.removeEventListener('touchmove', handleTouchMove);
+        window.removeEventListener('touchend', handleTouchEnd);
+        window.removeEventListener('touchcancel', handleTouchEnd);
         containerElForCleanup?.removeEventListener('click', handleClickCapture, true);
         const mobileHandler = (art as unknown as { __mobileFullscreenHandler?: (e: Event) => void })
           .__mobileFullscreenHandler;
@@ -863,6 +1017,7 @@ export function ArtVideoPlayer({
         }
         if (spaceLongPressTimer) clearTimeout(spaceLongPressTimer);
         if (mouseLongPressTimer) clearTimeout(mouseLongPressTimer);
+        if (touchLongPressTimer) clearTimeout(touchLongPressTimer);
       };
     });
 
