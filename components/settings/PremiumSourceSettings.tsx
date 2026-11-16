@@ -26,9 +26,14 @@ export function PremiumSourceSettings({
         source.baseUrl.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    // 自定义源始终可见，折叠时仅收起超出部分的默认源，避免用户新增的源被隐藏
+    const isCustomSource = (source: VideoSource) => !PREMIUM_SOURCES.some(d => d.id === source.id);
+    const collapsedSources = filteredSources.filter(
+        (source, index) => index < 10 || isCustomSource(source)
+    );
     const displayedSources = showAllSources || searchQuery
         ? filteredSources
-        : filteredSources.slice(0, 10);
+        : collapsedSources;
 
     const handleToggle = (id: string) => {
         const updated = sources.map(s =>
@@ -107,7 +112,7 @@ export function PremiumSourceSettings({
                 onEdit={onEditSource}
                 defaultIds={PREMIUM_SOURCES.map(s => s.id)}
             />
-            {!searchQuery && sources.length > 10 && (
+            {!searchQuery && filteredSources.length > collapsedSources.length && (
                 <button
                     onClick={() => setShowAllSources(!showAllSources)}
                     className="w-full mt-4 px-4 py-3 rounded-[var(--radius-2xl)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] text-sm font-medium hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer"

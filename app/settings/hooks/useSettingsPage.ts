@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { settingsStore, getDefaultSources, getDefaultPremiumSources, type SortOption } from '@/lib/store/settings-store';
 import type { VideoSource, SourceSubscription } from '@/lib/types';
 import {
@@ -7,8 +8,15 @@ import {
     parseSourcesFromJson,
     fetchSourcesFromUrl
 } from '@/lib/utils/source-import-utils';
+import {
+    fetchRemoteSources,
+    pushRemoteSources,
+    mergeRemoteSources,
+} from '@/lib/sync/sources-sync';
 
 export function useSettingsPage() {
+    const { data: session } = useSession();
+    const userId = session?.user?.id ?? null;
     const [sources, setSources] = useState<VideoSource[]>([]);
     const [subscriptions, setSubscriptions] = useState<SourceSubscription[]>([]);
     const [sortBy, setSortBy] = useState<SortOption>('default');
@@ -58,6 +66,28 @@ export function useSettingsPage() {
         return unsubscribe;
     }, []);
 
+    // 登录后拉取账号中的自定义源并与本地合并；未登录只用本地
+    useEffect(() => {
+        if (!userId) return;
+        let cancelled = false;
+
+        const pullRemoteSources = async () => {
+            const remote = await fetchRemoteSources();
+            if (cancelled || !remote) return;
+
+            const currentSettings = settingsStore.getSettings();
+            const merged = mergeRemoteSources(currentSettings.sources, remote);
+            if (merged.length === currentSettings.sources.length) return;
+
+            settingsStore.saveSettings({ ...currentSettings, sources: merged });
+        };
+
+        pullRemoteSources();
+        return () => {
+            cancelled = true;
+        };
+    }, [userId]);
+
     const handleSourcesChange = (newSources: VideoSource[]) => {
         setSources(newSources);
         const currentSettings = settingsStore.getSettings();
@@ -71,6 +101,10 @@ export function useSettingsPage() {
             passwordAccess,
             accessPasswords
         });
+        // 登录后把自定义源同步到账号；未登录仅保存在本地
+        if (userId) {
+            void pushRemoteSources(newSources);
+        }
     };
 
     const handleAddSource = (source: VideoSource) => {
