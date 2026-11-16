@@ -126,6 +126,7 @@ export default function SettingsPage() {
         }}
         onAdd={handleAddSource}
         existingIds={sources.map(s => s.id)}
+        existingSources={sources}
         initialValues={editingSource}
       />
 

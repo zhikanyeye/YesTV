@@ -3,6 +3,7 @@
  */
 
 import type { VideoSource, SourceSubscription } from '@/lib/types';
+import { normalizeVideoSource } from './source-normalization';
 
 /**
  * Simplified source format for import
@@ -29,16 +30,7 @@ export interface ImportResult {
  * Convert simplified import format to full VideoSource
  */
 export function convertToVideoSource(source: ImportSourceFormat): VideoSource {
-    return {
-        id: source.id,
-        name: source.name,
-        baseUrl: source.baseUrl,
-        searchPath: '',
-        detailPath: '',
-        enabled: source.enabled !== false,
-        priority: source.priority || 1,
-        group: source.group || 'normal',
-    };
+    return normalizeVideoSource(source);
 }
 
 /**
@@ -69,10 +61,18 @@ export function parseSourcesFromJson(jsonString: string): ImportResult {
     // Handle different JSON structures
     if (Array.isArray(data)) {
         sourcesArray = data;
-    } else if (data.sources && Array.isArray(data.sources)) {
+    } else if (data && Array.isArray(data.sources)) {
         sourcesArray = data.sources;
-    } else if (data.list && Array.isArray(data.list)) {
+    } else if (data && Array.isArray(data.list)) {
         sourcesArray = data.list;
+    } else if (data && Array.isArray(data.sites)) {
+        sourcesArray = data.sites;
+    } else if (data && typeof data.api_site === 'object' && data.api_site !== null) {
+        sourcesArray = Object.entries(data.api_site).map(([id, item]) => ({
+            ...(typeof item === 'object' && item !== null ? item : {}), id,
+        }));
+    } else if (typeof data === 'string' || (data && (data.baseUrl || data.url || data.api))) {
+        sourcesArray = [data];
     } else {
         throw new Error('无法识别的JSON格式');
     }
@@ -81,15 +81,21 @@ export function parseSourcesFromJson(jsonString: string): ImportResult {
     const premiumSources: VideoSource[] = [];
 
     for (const item of sourcesArray) {
-        if (!isValidSourceFormat(item)) continue;
-
-        const source = convertToVideoSource(item);
-
-        if (item.group === 'premium') {
+        let source: VideoSource;
+        try {
+            source = normalizeVideoSource(item);
+        } catch {
+            continue;
+        }
+        if (source.group === 'premium') {
             premiumSources.push(source);
         } else {
             normalSources.push(source);
         }
+    }
+
+    if (normalSources.length + premiumSources.length === 0) {
+        throw new Error('JSON 中没有有效的视频源地址，请检查 baseUrl、url 或 api 字段');
     }
 
     return {

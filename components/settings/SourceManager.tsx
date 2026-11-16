@@ -38,8 +38,8 @@ export function SourceManager({
           key={source.id}
           className="bg-[var(--glass-bg)] backdrop-blur-xl border border-[var(--glass-border)] rounded-[var(--radius-2xl)] p-4 transition-all duration-300"
         >
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0 basis-full sm:basis-auto">
               {/* Toggle Switch */}
               <button
                 onClick={() => handleToggle(source.id)}
@@ -60,17 +60,17 @@ export function SourceManager({
 
               {/* Source Info */}
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-[var(--text-color)] truncate">
+                <div className="font-semibold text-[var(--text-color)] break-words">
                   {source.name}
                 </div>
-                <div className="text-sm text-[var(--text-color-secondary)] truncate">
+                <div className="text-sm text-[var(--text-color-secondary)] truncate" title={source.baseUrl}>
                   {source.baseUrl}
                 </div>
               </div>
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
               {/* Priority Controls */}
               <button
                 onClick={() => handlePriorityChange(source.id, 'up')}

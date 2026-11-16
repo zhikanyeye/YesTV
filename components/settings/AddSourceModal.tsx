@@ -10,6 +10,7 @@ interface AddSourceModalProps {
   onClose: () => void;
   onAdd: (source: VideoSource) => void;
   existingIds: string[];
+  existingSources?: VideoSource[];
   initialValues?: VideoSource | null;
 }
 
@@ -17,9 +18,10 @@ export function AddSourceModal(props: AddSourceModalProps) {
   return props.isOpen ? <AddSourceModalContent {...props} /> : null;
 }
 
-function AddSourceModalContent({ isOpen, onClose, onAdd, existingIds, initialValues }: AddSourceModalProps) {
+function AddSourceModalContent({ isOpen, onClose, onAdd, existingIds, existingSources, initialValues }: AddSourceModalProps) {
   const { name, setName, url, setUrl, error, handleSubmit } = useAddSourceForm({
     existingIds,
+    existingSources,
     onAdd,
     onClose,
     initialValues,
@@ -42,30 +44,33 @@ function AddSourceModalContent({ isOpen, onClose, onAdd, existingIds, initialVal
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="source-name" className="block mb-2 font-medium text-[var(--text-color)]">
-                源名称
+                源名称（可选）
               </label>
               <input
                 id="source-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="例如：新视频源"
+                placeholder="留空时使用 JSON 名称或域名"
                 className="w-full bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-[var(--radius-2xl)] px-4 py-3 text-[var(--text-color)] placeholder:text-[var(--text-color-secondary)] focus:outline-none focus:border-[var(--accent-color)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--accent-color)_30%,transparent)] transition-all duration-[0.4s]"
               />
             </div>
 
             <div>
               <label htmlFor="source-url" className="block mb-2 font-medium text-[var(--text-color)]">
-                接口地址
+                域名、接口地址或 JSON 配置
               </label>
-              <input
+              <textarea
                 id="source-url"
-                type="url"
+                rows={3}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://example.com/api.php/provide/vod"
+                placeholder={'example.com 或 https://example.com/api.php/provide/vod/ 或 {"name":"视频源","api":"https://example.com"}'}
                 className="w-full bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-[var(--radius-2xl)] px-4 py-3 text-[var(--text-color)] placeholder:text-[var(--text-color-secondary)] focus:outline-none focus:border-[var(--accent-color)] focus:ring-4 focus:ring-[color-mix(in_srgb,var(--accent-color)_30%,transparent)] transition-all duration-[0.4s]"
               />
+              <p className="mt-2 text-xs text-[var(--text-color-secondary)]">
+                域名自动补齐苹果 CMS 接口；支持 vod/json 接口地址及单个 JSON 配置。搜索和详情参数自动生成。
+              </p>
             </div>
 
             {error && (

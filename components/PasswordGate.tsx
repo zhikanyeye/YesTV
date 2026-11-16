@@ -5,7 +5,30 @@ import { settingsStore } from '@/lib/store/settings-store';
 import { useSubscriptionSync } from '@/lib/hooks/useSubscriptionSync';
 import { Lock } from 'lucide-react';
 
-const SESSION_UNLOCKED_KEY = 'kvideo-unlocked';
+// 持久化到 localStorage，浏览器本地保存后新开页面自动解锁；
+// 旧版本写入的是同名 sessionStorage 标记，这里做一次迁移。
+const UNLOCKED_KEY = 'kvideo-unlocked';
+
+function isUnlockedLocally(): boolean {
+    try {
+        if (localStorage.getItem(UNLOCKED_KEY) === 'true') return true;
+        if (sessionStorage.getItem(UNLOCKED_KEY) === 'true') {
+            localStorage.setItem(UNLOCKED_KEY, 'true');
+            return true;
+        }
+    } catch {
+        // 存储不可用时按未解锁处理
+    }
+    return false;
+}
+
+function markUnlocked(): void {
+    try {
+        localStorage.setItem(UNLOCKED_KEY, 'true');
+    } catch {
+        // 忽略存储写入失败
+    }
+}
 
 export function PasswordGate({ children, hasEnvPassword: initialHasEnvPassword }: { children: React.ReactNode, hasEnvPassword: boolean }) {
     // Enable background subscription syncing globally
@@ -22,7 +45,7 @@ export function PasswordGate({ children, hasEnvPassword: initialHasEnvPassword }
 
         const init = async () => {
             const settings = settingsStore.getSettings();
-            const isUnlocked = sessionStorage.getItem(SESSION_UNLOCKED_KEY) === 'true';
+            const isUnlocked = isUnlockedLocally();
 
             // 1. Initial local check (fast)
             const localLocked = (settings.passwordAccess || initialHasEnvPassword) && !isUnlocked;
@@ -70,7 +93,7 @@ export function PasswordGate({ children, hasEnvPassword: initialHasEnvPassword }
         // Function to handle updates from the store
         const handleSettingsUpdate = () => {
             const settings = settingsStore.getSettings();
-            const isUnlocked = sessionStorage.getItem(SESSION_UNLOCKED_KEY) === 'true';
+            const isUnlocked = isUnlockedLocally();
 
             // We can't easily check env password synchronously here, but we can check local settings.
             // If local setting says lock, and we are not unlocked, we lock.
@@ -98,7 +121,7 @@ export function PasswordGate({ children, hasEnvPassword: initialHasEnvPassword }
 
         // First check local passwords
         if (settings.accessPasswords.includes(password)) {
-            sessionStorage.setItem(SESSION_UNLOCKED_KEY, 'true');
+            markUnlocked();
             setIsLocked(false);
             setError(false);
             return;
@@ -114,7 +137,7 @@ export function PasswordGate({ children, hasEnvPassword: initialHasEnvPassword }
                 });
                 const data = await res.json();
                 if (data.valid) {
-                    sessionStorage.setItem(SESSION_UNLOCKED_KEY, 'true');
+                    markUnlocked();
                     setIsLocked(false);
                     setError(false);
                     return;

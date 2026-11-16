@@ -77,6 +77,7 @@ export default function PremiumSettingsPage() {
                 }}
                 onAdd={handleAddSource}
                 existingIds={premiumSources.map(s => s.id)}
+                existingSources={premiumSources}
                 initialValues={editingSource}
             />
 

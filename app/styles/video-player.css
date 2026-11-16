@@ -424,9 +424,14 @@
     --art-progress-height: 4px;
 }
 
-/* 网页全屏（移动端主用）：必须高于页面所有浮层，否则会被导航/搜索面板遮挡 */
-.artplayer-container .art-video-player.art-fullscreen-web {
+/* 全屏态：网页全屏会把播放器迁移到 body，选择器不能依赖 .artplayer-container 祖先 */
+.art-video-player.art-fullscreen-web {
     z-index: 2147483000;
+}
+
+/* 原生全屏：使用动态视口高度，避免移动浏览器工具栏导致底部控制条超出屏幕 */
+.art-video-player.art-fullscreen {
+    height: 100dvh;
 }
 
 /* 移动端：进度条更纤细；设置面板在小屏上允许更高，方便滑动查看 */
@@ -435,8 +440,30 @@
         --art-progress-height: 3px;
     }
 
-    .artplayer-container .art-video-player .art-settings {
-        max-height: 60vh;
+    .art-video-player.art-fullscreen-web,
+    .art-video-player.art-fullscreen {
+        --art-progress-height: 3px;
+        --art-control-height: 40px;
+    }
+
+    .art-video-player.art-fullscreen-web .art-settings,
+    .art-video-player.art-fullscreen .art-settings {
+        max-height: calc(100dvh - var(--art-control-height) - 16px);
+        max-height: calc(100vh - var(--art-control-height) - 16px);
+    }
+
+    /* 移动端底部控制条允许收缩，防止按钮挤在单行被裁切 */
+    .art-video-player .art-controls-left,
+    .art-video-player .art-controls-right {
+        min-width: 0;
+        flex-shrink: 1;
+        overflow: hidden;
+    }
+
+    .art-video-player .art-controls-right .art-control,
+    .art-video-player .art-controls-left .art-control {
+        min-width: 32px;
+        padding: 0 4px;
     }
 }
 
@@ -447,8 +474,8 @@
     }
 }
 
-/* 控制条“长按加速”按钮 */
-.artplayer-container .art-video-player .art-control-speedBoost {
+/* 控制条“长按加速”按钮：网页全屏迁移到 body 后仍需保留样式 */
+.art-video-player .art-control-speedBoost {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -458,7 +485,7 @@
     cursor: pointer;
 }
 
-.artplayer-container .art-video-player .art-speed-boost-label {
+.art-video-player .art-speed-boost-label {
     font-size: 12px;
     line-height: 1;
     padding: 3px 7px;
@@ -467,20 +494,20 @@
     white-space: nowrap;
 }
 
-.artplayer-container .art-video-player .art-control-speedBoost.art-speed-boost-active .art-speed-boost-label,
-.artplayer-container .art-video-player .art-control-speedBoost:active .art-speed-boost-label {
+.art-video-player .art-control-speedBoost.art-speed-boost-active .art-speed-boost-label,
+.art-video-player .art-control-speedBoost:active .art-speed-boost-label {
     background: var(--art-theme, #f00);
     color: #fff;
 }
 
 /* 设置面板“自定义长按倍速”数字输入框 */
-.artplayer-container .art-video-player .art-speed-input-wrap {
+.art-video-player .art-speed-input-wrap {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-.artplayer-container .art-video-player .art-speed-input {
+.art-video-player .art-speed-input {
     width: 68px;
     height: 26px;
     padding: 0 6px;
@@ -493,11 +520,11 @@
     outline: none;
 }
 
-.artplayer-container .art-video-player .art-speed-input:focus {
+.art-video-player .art-speed-input:focus {
     border-color: var(--art-theme, #f00);
 }
 
-.artplayer-container .art-video-player .art-speed-input-unit {
+.art-video-player .art-speed-input-unit {
     font-size: 13px;
     color: rgba(255, 255, 255, 0.8);
 }
